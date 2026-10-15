@@ -31,13 +31,6 @@ final class Config
             }
         }
 
-        foreach ($values as $key => $value) {
-            $env = getenv($key);
-            if ($env !== false) {
-                $values[$key] = $env;
-            }
-        }
-
         return new self($values);
     }
 
@@ -49,16 +42,25 @@ final class Config
 
     public function get(string $key, string $default = ''): string
     {
-        return $this->values[$key] ?? $default;
+        return $this->raw($key) ?? $default;
     }
 
     public function bool(string $key, bool $default = false): bool
     {
-        if (!isset($this->values[$key])) {
-            return $default;
+        $value = $this->raw($key);
+
+        return $value === null ? $default : filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /** Una variable de entorno real tiene prioridad sobre el .env. */
+    private function raw(string $key): ?string
+    {
+        $env = getenv($key);
+        if ($env !== false) {
+            return $env;
         }
 
-        return filter_var($this->values[$key], FILTER_VALIDATE_BOOLEAN);
+        return $this->values[$key] ?? null;
     }
 
     private static function unquote(string $value): string

@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace App\Core;
 
+use App\Controller\Api\ReservaController as ApiReservaController;
+use App\Repository\PdoTransactionManager;
+use App\Repository\ReservaEventoRepository;
+use App\Repository\ReservaRepository;
+use App\Service\ReservaService;
+use App\Validation\ReservaValidator;
 use PDO;
 use Throwable;
 
@@ -56,7 +62,30 @@ final class App
     {
         $router = new Router();
 
+        // Los controladores se crean dentro de cada closure: una petición que no
+        // los necesita (p. ej. un 404) no abre conexión a la base de datos.
+        $api = fn (): ApiReservaController => new ApiReservaController($this->reservaService());
+
+        $router->get('/api/reservas', fn (Request $r) => $api()->index($r));
+        $router->post('/api/reservas', $this->csrfProtected(fn (Request $r) => $api()->store($r)));
+        $router->get('/api/reservas/{id}', fn (Request $r, array $p) => $api()->show($r, $p));
+        $router->patch('/api/reservas/{id}/estado', $this->csrfProtected(
+            fn (Request $r, array $p) => $api()->updateEstado($r, $p),
+        ));
+
         return $router;
+    }
+
+    private function reservaService(): ReservaService
+    {
+        $pdo = $this->pdo();
+
+        return new ReservaService(
+            new ReservaRepository($pdo),
+            new ReservaEventoRepository($pdo),
+            new PdoTransactionManager($pdo),
+            new ReservaValidator(),
+        );
     }
 
     /**
