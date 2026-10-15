@@ -1,0 +1,17 @@
+# Sin listado de directorios
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Bloquea cualquier fichero o carpeta oculta (.env, .git, .htaccess…)
+    RewriteRule (^|/)\. - [F,L]
+
+    # Los ficheros estáticos existentes se sirven tal cual; todo lo demás va al front controller
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule>
