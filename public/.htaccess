@@ -4,8 +4,8 @@ Options -Indexes
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Bloquea cualquier fichero o carpeta oculta (.env, .git, .htaccess…)
-    RewriteRule (^|/)\. - [F,L]
+    # Bloquea cualquier fichero o carpeta oculta (.htaccess…) salvo .well-known (validación SSL)
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
 
     # Los ficheros estáticos existentes se sirven tal cual; todo lo demás va al front controller
     RewriteCond %{REQUEST_FILENAME} !-f

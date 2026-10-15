@@ -1,0 +1,32 @@
+# .htaccess de la RAÍZ del proyecto.
+# Solo se usa en hostings compartidos donde no se puede apuntar el DocumentRoot
+# a public/. Si puedes configurar el DocumentRoot a public/, hazlo: es mejor.
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Ficheros y carpetas ocultos (.env, .git, .htaccess…). Se deja pasar
+    # .well-known porque los hostings lo usan para validar certificados SSL.
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
+    # Código, plantillas, dependencias, SQL, tests y logs nunca son públicos.
+    RewriteRule ^(src|templates|vendor|database|tests|var)(/|$) - [F,L]
+    RewriteRule ^(composer\.(json|lock)|phpunit\.xml|README\.md)$ - [F,L]
+
+    # Todo lo demás se sirve desde public/ (la URL no muestra /public).
+    RewriteCond %{REQUEST_URI} !/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Segunda barrera por si mod_rewrite no estuviera disponible.
+<FilesMatch "^(\.env.*|composer\.(json|lock)|phpunit\.xml)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
