@@ -43,12 +43,14 @@ final class Router
     public function dispatch(Request $request): Response
     {
         $allowed = [];
+        // HEAD se atiende con la ruta GET (el servidor web descarta el cuerpo).
+        $method = $request->method === 'HEAD' ? 'GET' : $request->method;
 
         foreach ($this->routes as $route) {
             if (preg_match($route['regex'], $request->path, $matches) !== 1) {
                 continue;
             }
-            if ($route['method'] !== $request->method) {
+            if ($route['method'] !== $method) {
                 $allowed[] = $route['method'];
                 continue;
             }

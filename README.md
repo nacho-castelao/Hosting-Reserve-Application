@@ -255,9 +255,10 @@ Como defensa adicional, las escrituras de la API exigen `Content-Type: applicati
 composer test
 ```
 
-38 tests unitarios (PHPUnit 10):
+49 tests unitarios (PHPUnit 10):
 - **`ReservaValidatorTest`**: payload válido y normalizado, todos los obligatorios a la vez, email inválido, salida ≤ entrada, fechas imposibles o mal formadas (`2027-02-30`, `2027-13-01`…), entrada en el pasado, importes inválidos, campos del servidor o desconocidos, longitudes, filtros (400) y límite máximo.
 - **`EstadoReservaTest`**: matriz completa de transiciones permitidas y prohibidas.
+- **`RouterTest` / `RequestTest`**: ids no numéricos → 404, 405 con `Allow`, HEAD, y cuerpos rechazados (400 JSON roto o no objeto, 413, 415).
 - **`ReservaServiceTest`**: con repositorios y transacción en memoria. Comprueba el evento al crear y al cambiar de estado, que no se toca nada si la validación falla, y los casos 409 (mismo estado o estado final) y 404.
 
 Además, durante el desarrollo se probaron manualmente con curl todos los códigos de la API (200, 201, 400, 403, 404, 405, 409, 413, 415, 422, 500), además del flujo en navegador (filtros, alta, cancelación y XSS).
