@@ -1,0 +1,584 @@
+/* Gestor de reservas — estilos mobile first, sin frameworks. */
+
+:root {
+    --color-bg: #f5f6f8;
+    --color-surface: #ffffff;
+    --color-text: #1f2430;
+    --color-muted: #5f6676;
+    --color-border: #dde1e8;
+    --color-primary: #1f5fbf;
+    --color-primary-dark: #174a96;
+    --color-danger: #b42318;
+    --color-danger-bg: #fdecea;
+    --color-success: #146c43;
+    --color-success-bg: #e6f4ec;
+    --color-warning: #8a5300;
+    --color-warning-bg: #fff4e0;
+    --radius: 8px;
+    --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--color-text);
+    background: var(--color-bg);
+}
+
+a {
+    color: var(--color-primary);
+}
+
+h1,
+h2 {
+    line-height: 1.2;
+    margin: 0 0 0.75rem;
+}
+
+h1 {
+    font-size: 1.5rem;
+}
+
+h2 {
+    font-size: 1.15rem;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.skip-link {
+    position: absolute;
+    left: -9999px;
+}
+
+.skip-link:focus {
+    left: 1rem;
+    top: 1rem;
+    z-index: 10;
+    padding: 0.5rem 1rem;
+    background: var(--color-surface);
+}
+
+.muted {
+    color: var(--color-muted);
+    font-size: 0.875rem;
+}
+
+.pre-line {
+    white-space: pre-line;
+}
+
+/* ---------- Cabecera y pie ---------- */
+
+.site-header {
+    background: var(--color-primary-dark);
+    color: #fff;
+    margin-bottom: 1.5rem;
+}
+
+.site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 3.5rem;
+}
+
+.site-header a {
+    color: #fff;
+    text-decoration: none;
+}
+
+.site-header__brand {
+    font-weight: 700;
+}
+
+.site-footer {
+    margin-top: 3rem;
+    padding: 1.5rem 0;
+    color: var(--color-muted);
+    font-size: 0.875rem;
+    border-top: 1px solid var(--color-border);
+}
+
+/* ---------- Bloques ---------- */
+
+.page-header,
+.list-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.card__title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem;
+}
+
+details.card > summary {
+    cursor: pointer;
+    margin: 0;
+}
+
+details.card[open] > summary {
+    margin-bottom: 1rem;
+}
+
+/* ---------- Avisos ---------- */
+
+.status {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.status:empty {
+    display: none;
+}
+
+.status--success,
+.alert--success {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+}
+
+.status--error,
+.alert--error {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+.alert {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+}
+
+.alert ul {
+    margin: 0.25rem 0 0;
+    padding-left: 1.25rem;
+}
+
+.alert p {
+    margin: 0;
+}
+
+/* ---------- Formularios ---------- */
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+input,
+select,
+textarea {
+    font: inherit;
+    width: 100%;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: #fff;
+    color: inherit;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.btn:focus-visible,
+a:focus-visible,
+summary:focus-visible {
+    outline: 3px solid rgba(31, 95, 191, 0.4);
+    outline-offset: 1px;
+}
+
+[aria-invalid="true"] {
+    border-color: var(--color-danger);
+}
+
+.field-error {
+    margin: 0;
+    color: var(--color-danger);
+    font-size: 0.85rem;
+}
+
+.filters,
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+.filters__actions,
+.form-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.hint {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 0.85rem;
+}
+
+/* ---------- Botones ---------- */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.5rem 1rem;
+    font: inherit;
+    font-weight: 600;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--color-text);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background: var(--color-bg);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+
+.btn--primary {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+}
+
+.btn--primary:hover {
+    background: var(--color-primary-dark);
+}
+
+.btn--danger {
+    color: var(--color-danger);
+    border-color: currentColor;
+}
+
+.btn--danger:hover {
+    background: var(--color-danger-bg);
+}
+
+.btn--ghost {
+    border-color: transparent;
+}
+
+.btn--small {
+    padding: 0.25rem 0.6rem;
+    font-size: 0.85rem;
+}
+
+/* ---------- Etiquetas de estado ---------- */
+
+.badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.badge--pendiente {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+}
+
+.badge--confirmada {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+}
+
+.badge--cancelada {
+    background: #eceef2;
+    color: var(--color-muted);
+    text-decoration: line-through;
+}
+
+/* ---------- Tabla: tarjetas apiladas en móvil ---------- */
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table thead {
+    /* En móvil cada celda muestra su etiqueta con data-label. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+}
+
+.table tr {
+    display: block;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.3rem 0;
+    text-align: right;
+}
+
+.table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--color-muted);
+    text-align: left;
+}
+
+.table td:first-child {
+    flex-direction: column;
+    text-align: left;
+    gap: 0;
+}
+
+.table td:first-child::before,
+.table .actions::before,
+.table .empty-row td::before {
+    content: none;
+}
+
+.table .empty-row td {
+    justify-content: center;
+    color: var(--color-muted);
+}
+
+.table tbody[aria-busy="true"] {
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+
+/* ---------- Detalle ---------- */
+
+.details {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin: 0 0 1rem;
+}
+
+.details dt {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    font-weight: 600;
+}
+
+.details dd {
+    margin: 0;
+}
+
+.detail-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 1.25rem;
+    border-left: 2px solid var(--color-border);
+}
+
+.timeline__item {
+    position: relative;
+    padding: 0 0 1rem 0.5rem;
+}
+
+.timeline__item::before {
+    content: "";
+    position: absolute;
+    left: -1.65rem;
+    top: 0.35rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background: var(--color-primary);
+    border: 2px solid var(--color-surface);
+}
+
+.timeline__item time {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+}
+
+.timeline__item p {
+    margin: 0.15rem 0 0;
+}
+
+.error-page {
+    text-align: center;
+    padding: 2.5rem 1rem;
+}
+
+.error-page__code {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    margin: 0;
+}
+
+/* ---------- >= 640px: tabla clásica y rejillas ---------- */
+
+@media (min-width: 640px) {
+    h1 {
+        font-size: 1.75rem;
+    }
+
+    .filters {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .form-grid,
+    .details {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .form-grid .full,
+    .details .full {
+        grid-column: 1 / -1;
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+    }
+
+    .table thead {
+        position: static;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        clip: auto;
+    }
+
+    .table tr {
+        display: table-row;
+        border: 0;
+        border-radius: 0;
+        padding: 0;
+        margin: 0;
+    }
+
+    .table th,
+    .table td {
+        display: table-cell;
+        padding: 0.65rem 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid var(--color-border);
+        vertical-align: middle;
+    }
+
+    .table th {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--color-muted);
+        background: var(--color-bg);
+    }
+
+    .table td::before {
+        content: none;
+    }
+
+    .table td:first-child {
+        display: table-cell;
+    }
+
+    .table td:first-child .muted {
+        display: block;
+    }
+
+    .table tbody tr:hover {
+        background: #f9fafb;
+    }
+
+    .table .num {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .table .actions {
+        text-align: right;
+    }
+
+    .table .empty-row td {
+        text-align: center;
+    }
+}
+
+@media (min-width: 960px) {
+    .filters {
+        grid-template-columns: repeat(4, 1fr) auto;
+        align-items: end;
+    }
+
+    .filters .hint {
+        grid-column: 1 / -1;
+    }
+}
