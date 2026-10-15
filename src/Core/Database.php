@@ -30,7 +30,7 @@ final class Database
 
         // Alinea la zona horaria de la sesión SQL con la de PHP para que
         // CURRENT_TIMESTAMP y las fechas mostradas coincidan.
-        $pdo->exec("SET time_zone = '" . date('P') . "'");
+        $pdo->prepare('SET time_zone = :tz')->execute([':tz' => date('P')]);
 
         return $pdo;
     }
