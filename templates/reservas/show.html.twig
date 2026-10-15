@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+{% import 'partials/_macros.html.twig' as ui %}
+
+{% block title %}Reserva #{{ reserva.id }}{% endblock %}
+
+{% block content %}
+    <p><a href="{{ url('/') }}" class="back-link">← Volver al listado</a></p>
+
+    {% if creada %}
+        <div class="alert alert--success" role="status">Reserva creada correctamente.</div>
+    {% endif %}
+
+    <article class="card" id="reserva-detalle" data-id="{{ reserva.id }}">
+        <div class="page-header">
+            <h1>Reserva #{{ reserva.id }}</h1>
+            <div data-cell="estado">{{ ui.badge(reserva.estado) }}</div>
+        </div>
+
+        <dl class="details">
+            <div><dt>Huésped</dt><dd>{{ reserva.nombre_huesped }}</dd></div>
+            <div><dt>Email</dt><dd>{{ reserva.email_huesped }}</dd></div>
+            <div><dt>Alojamiento</dt><dd>{{ reserva.nombre_alojamiento }}</dd></div>
+            <div><dt>Entrada</dt><dd><time datetime="{{ reserva.fecha_entrada }}">{{ reserva.fecha_entrada|date('d/m/Y') }}</time></dd></div>
+            <div><dt>Salida</dt><dd><time datetime="{{ reserva.fecha_salida }}">{{ reserva.fecha_salida|date('d/m/Y') }}</time></dd></div>
+            <div><dt>Importe</dt><dd>{{ ui.money(reserva.importe) }}</dd></div>
+            <div><dt>Creada</dt><dd>{{ reserva.fecha_creacion|date('d/m/Y H:i') }}</dd></div>
+            <div class="full"><dt>Notas</dt><dd class="pre-line">{{ reserva.notas ?: '—' }}</dd></div>
+        </dl>
+
+        {% if reserva.estado != 'cancelada' %}
+            <div class="detail-actions">
+                <button type="button" class="btn btn--danger js-cancel" data-id="{{ reserva.id }}" hidden>Cancelar reserva</button>
+            </div>
+        {% endif %}
+    </article>
+
+    <section class="card" aria-labelledby="historial-titulo">
+        <h2 id="historial-titulo" class="card__title">Historial</h2>
+        <ol class="timeline" id="timeline">
+            {% for evento in reserva.eventos %}
+                <li class="timeline__item timeline__item--{{ evento.tipo }}">
+                    <time datetime="{{ evento.fecha_creacion|date('Y-m-d\\TH:i:s') }}">{{ evento.fecha_creacion|date('d/m/Y H:i') }}</time>
+                    <p>{{ evento.descripcion }}</p>
+                </li>
+            {% else %}
+                <li class="timeline__item">Sin eventos registrados.</li>
+            {% endfor %}
+        </ol>
+    </section>
+{% endblock %}
+
+{% block scripts %}
+    <script type="module" src="{{ asset('js/reserva-detail.js') }}"></script>
+{% endblock %}

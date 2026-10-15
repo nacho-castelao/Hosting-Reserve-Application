@@ -1,0 +1,14 @@
+{# Etiqueta de color para el estado de una reserva. #}
+{% macro badge(estado) %}
+    <span class="badge badge--{{ estado }}">{{ estado|capitalize }}</span>
+{% endmacro %}
+
+{# Importe con formato español: 1.234,50 € #}
+{% macro money(importe) %}{{ importe|number_format(2, ',', '.') }} €{% endmacro %}
+
+{# Mensaje de error de un campo de formulario (el JS rellena el mismo elemento). #}
+{% macro field_error(name, errors) %}
+    <p class="field-error" id="error-{{ name }}" data-error-for="{{ name }}"{% if errors[name] is not defined %} hidden{% endif %}>
+        {{- errors[name] ?? '' -}}
+    </p>
+{% endmacro %}

@@ -1,0 +1,148 @@
+{% extends 'base.html.twig' %}
+{% import 'partials/_macros.html.twig' as ui %}
+
+{% block title %}Listado de reservas{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>Reservas</h1>
+    </div>
+
+    <section class="card" aria-labelledby="filtros-titulo">
+        <h2 id="filtros-titulo" class="card__title">Filtros</h2>
+
+        {% if filter_errors is not empty %}
+            <div class="alert alert--error" role="alert">
+                <p>Algunos filtros no son válidos y se han ignorado:</p>
+                <ul>
+                    {% for campo, mensaje in filter_errors %}
+                        <li><strong>{{ campo }}</strong>: {{ mensaje }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <form id="filtros" class="filters" method="get" action="{{ url('/') }}" novalidate>
+            <div class="field">
+                <label for="f-estado">Estado</label>
+                <select id="f-estado" name="estado">
+                    <option value="">Todos</option>
+                    {% for estado in estados %}
+                        <option value="{{ estado.value }}"{% if filtro.estado == estado.value %} selected{% endif %}>{{ estado.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label for="f-desde">Desde</label>
+                <input id="f-desde" type="date" name="desde" value="{{ filtro.desde }}">
+            </div>
+            <div class="field">
+                <label for="f-hasta">Hasta</label>
+                <input id="f-hasta" type="date" name="hasta" value="{{ filtro.hasta }}">
+            </div>
+            <div class="field field--grow">
+                <label for="f-q">Huésped</label>
+                <input id="f-q" type="search" name="q" value="{{ filtro.q }}" maxlength="100" placeholder="Buscar por nombre…" autocomplete="off">
+            </div>
+            <div class="filters__actions">
+                <button type="submit" class="btn">Filtrar</button>
+                <a class="btn btn--ghost" href="{{ url('/') }}" id="filtros-limpiar">Limpiar</a>
+            </div>
+            <p class="hint">El rango de fechas muestra las reservas cuya estancia se solapa con él.</p>
+        </form>
+    </section>
+
+    <details class="card new-reserva" id="nueva-reserva"{% if form_errors is not empty %} open{% endif %}>
+        <summary class="card__title">Nueva reserva</summary>
+
+        <form id="reserva-form" method="post" action="{{ url('/reservas') }}" class="form-grid">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+
+            {% if form_errors is not empty %}
+                <div class="alert alert--error full" role="alert">Revisa los campos marcados.</div>
+            {% endif %}
+
+            <div class="field">
+                <label for="nombre_huesped">Nombre del huésped</label>
+                <input id="nombre_huesped" name="nombre_huesped" type="text" required maxlength="{{ max_lengths.nombre_huesped }}"
+                       autocomplete="name" value="{{ old.nombre_huesped ?? '' }}" aria-describedby="error-nombre_huesped">
+                {{ ui.field_error('nombre_huesped', form_errors) }}
+            </div>
+            <div class="field">
+                <label for="email_huesped">Email</label>
+                <input id="email_huesped" name="email_huesped" type="email" required maxlength="{{ max_lengths.email_huesped }}"
+                       autocomplete="email" value="{{ old.email_huesped ?? '' }}" aria-describedby="error-email_huesped">
+                {{ ui.field_error('email_huesped', form_errors) }}
+            </div>
+            <div class="field full">
+                <label for="nombre_alojamiento">Alojamiento</label>
+                <input id="nombre_alojamiento" name="nombre_alojamiento" type="text" required maxlength="{{ max_lengths.nombre_alojamiento }}"
+                       value="{{ old.nombre_alojamiento ?? '' }}" aria-describedby="error-nombre_alojamiento">
+                {{ ui.field_error('nombre_alojamiento', form_errors) }}
+            </div>
+            <div class="field">
+                <label for="fecha_entrada">Fecha de entrada</label>
+                <input id="fecha_entrada" name="fecha_entrada" type="date" required min="{{ today }}"
+                       value="{{ old.fecha_entrada ?? '' }}" aria-describedby="error-fecha_entrada">
+                {{ ui.field_error('fecha_entrada', form_errors) }}
+            </div>
+            <div class="field">
+                <label for="fecha_salida">Fecha de salida</label>
+                <input id="fecha_salida" name="fecha_salida" type="date" required
+                       value="{{ old.fecha_salida ?? '' }}" aria-describedby="error-fecha_salida">
+                {{ ui.field_error('fecha_salida', form_errors) }}
+            </div>
+            <div class="field">
+                <label for="importe">Importe (€)</label>
+                <input id="importe" name="importe" type="number" required min="0" step="0.01" max="99999999.99" inputmode="decimal"
+                       value="{{ old.importe ?? '' }}" aria-describedby="error-importe">
+                {{ ui.field_error('importe', form_errors) }}
+            </div>
+            <div class="field full">
+                <label for="notas">Notas <span class="muted">(opcional)</span></label>
+                <textarea id="notas" name="notas" rows="3" maxlength="{{ max_lengths.notas }}" aria-describedby="error-notas">{{ old.notas ?? '' }}</textarea>
+                {{ ui.field_error('notas', form_errors) }}
+            </div>
+            <div class="form-actions full">
+                <button type="submit" class="btn btn--primary">Crear reserva</button>
+            </div>
+        </form>
+    </details>
+
+    <section aria-labelledby="listado-titulo">
+        <div class="list-header">
+            <h2 id="listado-titulo">Listado</h2>
+            <p id="results-count" class="muted" aria-live="polite">
+                {{ total }} {{ total == 1 ? 'reserva' : 'reservas' }}{% if total > reservas|length %} (mostrando {{ reservas|length }}){% endif %}
+            </p>
+        </div>
+
+        <div class="table-wrap">
+            <table class="table" id="reservas-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Huésped</th>
+                        <th scope="col">Alojamiento</th>
+                        <th scope="col">Entrada</th>
+                        <th scope="col">Salida</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col" class="num">Importe</th>
+                        <th scope="col"><span class="visually-hidden">Acciones</span></th>
+                    </tr>
+                </thead>
+                <tbody id="reservas-body">
+                    {% for reserva in reservas %}
+                        {% include 'partials/_reserva_row.html.twig' with { reserva: reserva } only %}
+                    {% else %}
+                        <tr class="empty-row"><td colspan="7">No hay reservas que coincidan con los filtros.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}
+
+{% block scripts %}
+    <script type="module" src="{{ asset('js/reservas-list.js') }}"></script>
+    <script type="module" src="{{ asset('js/reserva-form.js') }}"></script>
+{% endblock %}

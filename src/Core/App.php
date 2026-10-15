@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Core;
 
 use App\Controller\Api\ReservaController as ApiReservaController;
+use App\Controller\Web\ReservaController as WebReservaController;
 use App\Repository\PdoTransactionManager;
 use App\Repository\ReservaEventoRepository;
 use App\Repository\ReservaRepository;
@@ -72,6 +73,13 @@ final class App
         $router->patch('/api/reservas/{id}/estado', $this->csrfProtected(
             fn (Request $r, array $p) => $api()->updateEstado($r, $p),
         ));
+
+        $web = fn (): WebReservaController => new WebReservaController($this->reservaService(), $this->view());
+
+        $router->get('/', fn (Request $r) => $web()->index($r));
+        // Alta por formulario clásico (sin JS). Verifica el token CSRF del campo oculto.
+        $router->post('/reservas', fn (Request $r) => $web()->store($r));
+        $router->get('/reservas/{id}', fn (Request $r, array $p) => $web()->show($r, $p));
 
         return $router;
     }

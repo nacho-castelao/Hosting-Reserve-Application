@@ -1,0 +1,19 @@
+{% import 'partials/_macros.html.twig' as ui %}
+{# Misma estructura que construye reservas-list.js al re-renderizar la tabla. #}
+<tr data-id="{{ reserva.id }}">
+    <td data-label="Huésped">
+        <a href="{{ url('/reservas/' ~ reserva.id) }}">{{ reserva.nombre_huesped }}</a>
+        <span class="muted">{{ reserva.email_huesped }}</span>
+    </td>
+    <td data-label="Alojamiento">{{ reserva.nombre_alojamiento }}</td>
+    <td data-label="Entrada"><time datetime="{{ reserva.fecha_entrada }}">{{ reserva.fecha_entrada|date('d/m/Y') }}</time></td>
+    <td data-label="Salida"><time datetime="{{ reserva.fecha_salida }}">{{ reserva.fecha_salida|date('d/m/Y') }}</time></td>
+    <td data-label="Estado" data-cell="estado">{{ ui.badge(reserva.estado) }}</td>
+    <td data-label="Importe" class="num">{{ ui.money(reserva.importe) }}</td>
+    <td data-label="Acciones" class="actions">
+        {% if reserva.estado != 'cancelada' %}
+            {# Oculto sin JS: la cancelación necesita la API (PATCH). #}
+            <button type="button" class="btn btn--danger btn--small js-cancel" data-id="{{ reserva.id }}" hidden>Cancelar</button>
+        {% endif %}
+    </td>
+</tr>

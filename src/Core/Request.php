@@ -18,6 +18,7 @@ final class Request
      * @param array<string, mixed> $query
      * @param array<string, string> $headers Nombres en minúsculas.
      * @param string $basePath Prefijo público de la aplicación ('' si está en la raíz).
+     * @param array<string, mixed> $form Campos de formulario ($_POST).
      */
     public function __construct(
         public readonly string $method,
@@ -26,6 +27,7 @@ final class Request
         private readonly array $headers = [],
         public readonly string $basePath = '',
         ?string $body = null,
+        private readonly array $form = [],
     ) {
         $this->body = $body;
     }
@@ -63,6 +65,8 @@ final class Request
             $_GET,
             $headers,
             $basePath,
+            null,
+            $_POST,
         );
     }
 
@@ -98,6 +102,16 @@ final class Request
     public function queryParams(): array
     {
         return $this->query;
+    }
+
+    /**
+     * Campos de un formulario HTML clásico (fallback sin JavaScript).
+     *
+     * @return array<string, mixed>
+     */
+    public function formParams(): array
+    {
+        return $this->form;
     }
 
     public function header(string $name): ?string
