@@ -1,12 +1,14 @@
 {% extends 'base.html.twig' %}
+{% import 'partials/_macros.html.twig' as ui %}
 
 {% block title %}Error {{ status }}{% endblock %}
 
 {% block content %}
-    <section class="card error-page">
-        <p class="error-page__code">{{ status }}</p>
+    <section class="error-page">
+        <span class="error-page__icon error-page__icon--danger">{{ ui.icon('alert') }}</span>
+        <p class="error-page__code">Error {{ status }}</p>
         <h1>{{ status >= 500 ? 'Algo ha ido mal' : 'No se pudo completar la petición' }}</h1>
-        <p>{{ message }}</p>
-        <p><a class="btn" href="{{ url('/') }}">Volver al listado de reservas</a></p>
+        <p class="muted">{{ message }}</p>
+        <p><a class="btn btn--primary" href="{{ url('/') }}">{{ ui.icon('arrow-left') }} Volver al listado</a></p>
     </section>
 {% endblock %}

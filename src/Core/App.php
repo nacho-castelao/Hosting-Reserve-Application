@@ -69,6 +69,8 @@ final class App
 
         $router->get('/api/reservas', fn (Request $r) => $api()->index($r));
         $router->post('/api/reservas', $this->csrfProtected(fn (Request $r) => $api()->store($r)));
+        // {id} solo acepta dígitos, así que esta ruta no choca con la del detalle.
+        $router->get('/api/reservas/resumen', fn () => $api()->resumen());
         $router->get('/api/reservas/{id}', fn (Request $r, array $p) => $api()->show($r, $p));
         $router->patch('/api/reservas/{id}/estado', $this->csrfProtected(
             fn (Request $r, array $p) => $api()->updateEstado($r, $p),

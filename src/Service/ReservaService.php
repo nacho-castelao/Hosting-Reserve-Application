@@ -50,6 +50,31 @@ final class ReservaService
     }
 
     /**
+     * Resumen global para el panel: reservas por estado y facturación prevista
+     * (suma de importes de las reservas no canceladas).
+     *
+     * @return array{total: int, pendiente: int, confirmada: int, cancelada: int, ingresos: string}
+     */
+    public function resumen(): array
+    {
+        $porEstado = $this->reservas->totalesPorEstado();
+
+        $resumen = ['total' => 0];
+        $ingresos = 0.0;
+        foreach (EstadoReserva::cases() as $estado) {
+            $fila = $porEstado[$estado->value] ?? ['total' => 0, 'importe' => '0'];
+            $resumen[$estado->value] = $fila['total'];
+            $resumen['total'] += $fila['total'];
+            if ($estado !== EstadoReserva::Cancelada) {
+                $ingresos += (float) $fila['importe'];
+            }
+        }
+        $resumen['ingresos'] = number_format($ingresos, 2, '.', '');
+
+        return $resumen;
+    }
+
+    /**
      * Detalle de la reserva con su historial en 'eventos'.
      *
      * @return array<string, mixed>

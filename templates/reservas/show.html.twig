@@ -4,49 +4,102 @@
 {% block title %}Reserva #{{ reserva.id }}{% endblock %}
 
 {% block content %}
-    <p><a href="{{ url('/') }}" class="back-link">← Volver al listado</a></p>
+    <nav class="breadcrumb" aria-label="Ruta">
+        <a href="{{ url('/') }}" class="back-link">{{ ui.icon('arrow-left') }} Reservas</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">#{{ reserva.id }}</span>
+    </nav>
 
     {% if creada %}
-        <div class="alert alert--success" role="status">Reserva creada correctamente.</div>
+        <div class="alert alert--success" role="status">{{ ui.icon('check-circle', 'alert__icon') }}<p>Reserva creada correctamente.</p></div>
     {% endif %}
 
-    <article class="card" id="reserva-detalle" data-id="{{ reserva.id }}">
-        <div class="page-header">
-            <h1>Reserva #{{ reserva.id }}</h1>
-            <div data-cell="estado">{{ ui.badge(reserva.estado) }}</div>
-        </div>
-
-        <dl class="details">
-            <div><dt>Huésped</dt><dd>{{ reserva.nombre_huesped }}</dd></div>
-            <div><dt>Email</dt><dd>{{ reserva.email_huesped }}</dd></div>
-            <div><dt>Alojamiento</dt><dd>{{ reserva.nombre_alojamiento }}</dd></div>
-            <div><dt>Entrada</dt><dd><time datetime="{{ reserva.fecha_entrada }}">{{ reserva.fecha_entrada|date('d/m/Y') }}</time></dd></div>
-            <div><dt>Salida</dt><dd><time datetime="{{ reserva.fecha_salida }}">{{ reserva.fecha_salida|date('d/m/Y') }}</time></dd></div>
-            <div><dt>Importe</dt><dd>{{ ui.money(reserva.importe) }}</dd></div>
-            <div><dt>Creada</dt><dd>{{ reserva.fecha_creacion|date('d/m/Y H:i') }}</dd></div>
-            <div class="full"><dt>Notas</dt><dd class="pre-line">{{ reserva.notas ?: '—' }}</dd></div>
-        </dl>
-
-        {% if reserva.estado != 'cancelada' %}
-            <div class="detail-actions">
-                <button type="button" class="btn btn--danger js-cancel" data-id="{{ reserva.id }}" hidden>Cancelar reserva</button>
+    <article id="reserva-detalle" data-id="{{ reserva.id }}">
+        <header class="detail-hero card">
+            <div class="detail-hero__main">
+                {{ ui.avatar(reserva.nombre_huesped, reserva.id, 'lg') }}
+                <div>
+                    <p class="eyebrow">Reserva #{{ reserva.id }}</p>
+                    <h1 class="detail-hero__title" tabindex="-1">{{ reserva.nombre_huesped }}</h1>
+                    <p class="detail-hero__meta">
+                        <span data-cell="estado">{{ ui.badge(reserva.estado) }}</span>
+                        <span class="muted">Creada el {{ ui.fecha(reserva.fecha_creacion) }} a las {{ reserva.fecha_creacion|date('H:i') }}</span>
+                    </p>
+                </div>
             </div>
-        {% endif %}
-    </article>
+            {# Ocultos sin JS: los cambios de estado necesitan la API (PATCH). #}
+            <div class="detail-hero__actions" data-cell="acciones">
+                {% if reserva.estado == 'pendiente' %}
+                    <button type="button" class="btn btn--success js-estado" data-id="{{ reserva.id }}" data-estado="confirmada" hidden>
+                        {{ ui.icon('check') }}<span>Confirmar</span>
+                    </button>
+                {% endif %}
+                {% if reserva.estado != 'cancelada' %}
+                    <button type="button" class="btn btn--danger-soft js-estado" data-id="{{ reserva.id }}" data-estado="cancelada" hidden>
+                        {{ ui.icon('ban') }}<span>Cancelar reserva</span>
+                    </button>
+                {% endif %}
+            </div>
+        </header>
 
-    <section class="card" aria-labelledby="historial-titulo">
-        <h2 id="historial-titulo" class="card__title">Historial</h2>
-        <ol class="timeline" id="timeline">
-            {% for evento in reserva.eventos %}
-                <li class="timeline__item timeline__item--{{ evento.tipo }}">
-                    <time datetime="{{ evento.fecha_creacion|date('Y-m-d\\TH:i:s') }}">{{ evento.fecha_creacion|date('d/m/Y H:i') }}</time>
-                    <p>{{ evento.descripcion }}</p>
-                </li>
-            {% else %}
-                <li class="timeline__item">Sin eventos registrados.</li>
-            {% endfor %}
-        </ol>
-    </section>
+        <div class="detail-grid">
+            <div class="detail-grid__main">
+                <section class="card" aria-labelledby="estancia-titulo">
+                    <h2 id="estancia-titulo" class="card__title">Estancia</h2>
+                    <div class="stay-card">
+                        <div class="stay-card__date">
+                            <span class="stay-card__label">Entrada</span>
+                            <time datetime="{{ reserva.fecha_entrada }}">{{ ui.fecha(reserva.fecha_entrada) }}</time>
+                        </div>
+                        <div class="stay-card__nights">
+                            <span>{{ ui.noches(reserva.fecha_entrada, reserva.fecha_salida) }}</span>
+                        </div>
+                        <div class="stay-card__date stay-card__date--end">
+                            <span class="stay-card__label">Salida</span>
+                            <time datetime="{{ reserva.fecha_salida }}">{{ ui.fecha(reserva.fecha_salida) }}</time>
+                        </div>
+                    </div>
+
+                    <dl class="details">
+                        <div class="details__item">
+                            <span class="details__icon">{{ ui.icon('home') }}</span>
+                            <div><dt>Alojamiento</dt><dd>{{ reserva.nombre_alojamiento }}</dd></div>
+                        </div>
+                        <div class="details__item">
+                            <span class="details__icon">{{ ui.icon('mail') }}</span>
+                            <div><dt>Email</dt><dd><a href="mailto:{{ reserva.email_huesped }}">{{ reserva.email_huesped }}</a></dd></div>
+                        </div>
+                        <div class="details__item">
+                            <span class="details__icon">{{ ui.icon('euro') }}</span>
+                            <div><dt>Importe</dt><dd class="details__amount">{{ ui.money(reserva.importe) }}</dd></div>
+                        </div>
+                        <div class="details__item full">
+                            <span class="details__icon">{{ ui.icon('note') }}</span>
+                            <div><dt>Notas</dt><dd class="pre-line{{ reserva.notas ? '' : ' muted' }}">{{ reserva.notas ?: 'Sin notas.' }}</dd></div>
+                        </div>
+                    </dl>
+                </section>
+            </div>
+
+            <section class="card" aria-labelledby="historial-titulo">
+                <h2 id="historial-titulo" class="card__title">Historial</h2>
+                {# Misma estructura que construye reserva-detail.js (renderTimeline). #}
+                <ol class="timeline" id="timeline">
+                    {% for evento in reserva.eventos %}
+                        <li class="timeline__item timeline__item--{{ evento.tipo }}">
+                            <span class="timeline__dot">{{ ui.icon(evento.tipo == 'creacion' ? 'sparkle' : 'refresh') }}</span>
+                            <div>
+                                <p class="timeline__text">{{ evento.descripcion }}</p>
+                                <time datetime="{{ evento.fecha_creacion|date('Y-m-d\\TH:i:s') }}">{{ ui.fecha(evento.fecha_creacion) }} · {{ evento.fecha_creacion|date('H:i') }}</time>
+                            </div>
+                        </li>
+                    {% else %}
+                        <li class="timeline__item timeline__item--empty muted">Sin eventos registrados.</li>
+                    {% endfor %}
+                </ol>
+            </section>
+        </div>
+    </article>
 {% endblock %}
 
 {% block scripts %}

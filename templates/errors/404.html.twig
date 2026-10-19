@@ -1,12 +1,14 @@
 {% extends 'base.html.twig' %}
+{% import 'partials/_macros.html.twig' as ui %}
 
 {% block title %}Página no encontrada{% endblock %}
 
 {% block content %}
-    <section class="card error-page">
-        <p class="error-page__code">404</p>
+    <section class="error-page">
+        <span class="error-page__icon">{{ ui.icon('search') }}</span>
+        <p class="error-page__code">Error 404</p>
         <h1>No encontramos lo que buscas</h1>
-        <p>{{ message }}</p>
-        <p><a class="btn" href="{{ url('/') }}">Volver al listado de reservas</a></p>
+        <p class="muted">{{ message }}</p>
+        <p><a class="btn btn--primary" href="{{ url('/') }}">{{ ui.icon('arrow-left') }} Volver al listado</a></p>
     </section>
 {% endblock %}

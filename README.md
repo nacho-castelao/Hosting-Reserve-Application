@@ -95,6 +95,7 @@ Base: `/api`. Todas las respuestas son `application/json; charset=utf-8`.
 | Método | URL | Descripción | Éxito |
 |---|---|---|---|
 | GET | `/api/reservas?estado=&desde=&hasta=&q=&limit=` | Listado con filtros combinables | 200 |
+| GET | `/api/reservas/resumen` | Totales por estado y facturación prevista (importes no cancelados) | 200 |
 | GET | `/api/reservas/{id}` | Detalle + historial (`eventos`) | 200 |
 | POST | `/api/reservas` | Crear (empieza en `pendiente`) | 201 + `Location` |
 | PATCH | `/api/reservas/{id}/estado` | Cambiar estado: `{"estado":"confirmada"\|"cancelada"}` | 200 |
@@ -191,7 +192,7 @@ Así el cliente sabe si el fallo está en *cómo* envía o en *qué* envía, y e
 
 Como defensa adicional, las escrituras de la API exigen `Content-Type: application/json`: un formulario de otra web no puede enviarlo sin un *preflight* CORS, y la API no devuelve cabeceras CORS. La cookie además es `SameSite=Lax`.
 
-**Mejora progresiva.** El primer render es en servidor y funciona sin JS: los filtros son un `GET` y el alta es un formulario clásico con PRG (303 al detalle; si hay errores, se vuelve a pintar con 422 y se conservan los valores). Con JS, los filtros se aplican en vivo (debounce de 300 ms, cancelación de la petición anterior con `AbortController` y URL sincronizada con `history.replaceState`), el alta y la cancelación van por la API sin recargar, y aparece el botón *Cancelar*, que necesita PATCH.
+**Mejora progresiva.** El primer render es en servidor y funciona sin JS: los filtros son un `GET` y el alta es un formulario clásico con PRG (303 al detalle; si hay errores, se vuelve a pintar con 422 y se conservan los valores). Con JS, los filtros se aplican en vivo (debounce de 300 ms, cancelación de la petición anterior con `AbortController` y URL sincronizada con `history.replaceState`), el alta (en un panel lateral que sin JS se abre con `:target`) y los cambios de estado van por la API sin recargar, y aparecen los botones *Confirmar* y *Cancelar*, que necesitan PATCH y piden confirmación con un `<dialog>` modal. El tema claro/oscuro sigue al sistema y se puede fijar con el botón de la cabecera; los iconos salen de un único sprite SVG que comparten Twig y JS.
 
 **Importes como cadena.** En el JSON `importe` es una cadena decimal (`"1190.50"`), igual que lo devuelve `DECIMAL`, para no introducir errores de coma flotante.
 

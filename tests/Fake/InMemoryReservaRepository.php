@@ -25,6 +25,23 @@ final class InMemoryReservaRepository implements ReservaRepositoryInterface
         return count($this->rows);
     }
 
+    public function totalesPorEstado(): array
+    {
+        $totales = [];
+        foreach ($this->rows as $row) {
+            $totales[$row['estado']] ??= ['total' => 0, 'importe' => '0.00'];
+            $totales[$row['estado']]['total']++;
+            $totales[$row['estado']]['importe'] = number_format(
+                (float) $totales[$row['estado']]['importe'] + (float) $row['importe'],
+                2,
+                '.',
+                '',
+            );
+        }
+
+        return $totales;
+    }
+
     public function findById(int $id): ?array
     {
         return $this->rows[$id] ?? null;

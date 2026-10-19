@@ -1,37 +1,47 @@
-// Detalle: cancelación sin recargar, actualizando la etiqueta y el historial.
+// Detalle: confirmación y cancelación sin recargar, actualizando la etiqueta, las acciones y el historial.
 
-import { badge, cancelReserva, formatDateTime } from './ui.js';
+import { badge, changeEstado, el, estadoButtons, formatDateTime, icon } from './ui.js';
 
 const article = document.getElementById('reserva-detalle');
 const timeline = document.getElementById('timeline');
-const button = article?.querySelector('.js-cancel');
+const actions = article?.querySelector('[data-cell="acciones"]');
 
+/** Misma estructura que el historial de templates/reservas/show.html.twig. */
 function renderTimeline(eventos) {
     const items = eventos.map((evento) => {
-        const li = document.createElement('li');
-        li.className = `timeline__item timeline__item--${evento.tipo}`;
+        const li = el('li', { className: `timeline__item timeline__item--${evento.tipo}` });
 
-        const time = document.createElement('time');
-        time.dateTime = evento.fecha_creacion.replace(' ', 'T');
-        time.textContent = formatDateTime(evento.fecha_creacion);
+        const dot = el('span', { className: 'timeline__dot' });
+        dot.append(icon(evento.tipo === 'creacion' ? 'sparkle' : 'refresh'));
 
-        const text = document.createElement('p');
-        text.textContent = evento.descripcion;
+        const body = el('div');
+        body.append(
+            el('p', { className: 'timeline__text', text: evento.descripcion }),
+            el('time', { text: formatDateTime(evento.fecha_creacion), attrs: { datetime: evento.fecha_creacion.replace(' ', 'T') } }),
+        );
 
-        li.append(time, text);
+        li.append(dot, body);
         return li;
     });
+    items.at(-1)?.classList.add('is-new');
     timeline.replaceChildren(...items);
 }
 
-if (button) {
-    button.hidden = false;
-    button.addEventListener('click', async () => {
-        const reserva = await cancelReserva(button.dataset.id, button);
+if (actions) {
+    actions.querySelectorAll('.js-estado').forEach((button) => { button.hidden = false; });
+
+    actions.addEventListener('click', async (event) => {
+        const button = event.target.closest('.js-estado');
+        if (!button) return;
+
+        const reserva = await changeEstado(button.dataset.id, button.dataset.estado, button);
         if (!reserva) return;
 
-        article.querySelector('[data-cell="estado"]').replaceChildren(badge(reserva.estado));
+        const newBadge = badge(reserva.estado);
+        newBadge.classList.add('is-new');
+        article.querySelector('[data-cell="estado"]').replaceChildren(newBadge);
+        actions.replaceChildren(...estadoButtons(reserva, 'detail'));
         renderTimeline(reserva.eventos);
-        button.remove();
+        (actions.querySelector('.js-estado') ?? article.querySelector('h1'))?.focus?.();
     });
 }

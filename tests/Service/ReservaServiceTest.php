@@ -117,4 +117,26 @@ final class ReservaServiceTest extends TestCase
         $this->expectException(ValidationException::class);
         $this->service->cambiarEstado($id, ['estado' => 'borrada']);
     }
+
+    public function testResumenCountsByStateAndExcludesCancelledFromRevenue(): void
+    {
+        $this->crearReserva();
+        $confirmada = $this->crearReserva()['id'];
+        $cancelada = $this->crearReserva()['id'];
+        $this->service->cambiarEstado($confirmada, ['estado' => 'confirmada']);
+        $this->service->cambiarEstado($cancelada, ['estado' => 'cancelada']);
+
+        self::assertSame(
+            ['total' => 3, 'pendiente' => 1, 'confirmada' => 1, 'cancelada' => 1, 'ingresos' => '600.00'],
+            $this->service->resumen(),
+        );
+    }
+
+    public function testResumenWithoutReservationsIsAllZeros(): void
+    {
+        self::assertSame(
+            ['total' => 0, 'pendiente' => 0, 'confirmada' => 0, 'cancelada' => 0, 'ingresos' => '0.00'],
+            $this->service->resumen(),
+        );
+    }
 }

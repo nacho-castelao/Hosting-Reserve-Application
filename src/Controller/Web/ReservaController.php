@@ -88,6 +88,7 @@ final class ReservaController
         return $this->view->render('reservas/index.html.twig', [
             'reservas' => $result['items'],
             'total' => $result['total'],
+            'resumen' => $this->service->resumen(),
             'filtro' => $filtro->toArray(),
             'filter_errors' => $filterErrors,
             'estados' => EstadoReserva::cases(),

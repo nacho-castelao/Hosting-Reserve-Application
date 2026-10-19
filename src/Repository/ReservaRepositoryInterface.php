@@ -19,6 +19,14 @@ interface ReservaRepositoryInterface
 
     public function count(FiltroReservas $filtro): int;
 
+    /**
+     * Número de reservas y suma de importes agrupados por estado (sin filtros).
+     * Los estados sin reservas no aparecen.
+     *
+     * @return array<string, array{total: int, importe: string}>
+     */
+    public function totalesPorEstado(): array;
+
     /** @return array<string, mixed>|null */
     public function findById(int $id): ?array;
 

@@ -31,6 +31,12 @@ final class ReservaController
         ]);
     }
 
+    /** GET /api/reservas/resumen */
+    public function resumen(): JsonResponse
+    {
+        return JsonResponse::data($this->service->resumen());
+    }
+
     /** GET /api/reservas/{id} */
     public function show(Request $request, array $params): JsonResponse
     {

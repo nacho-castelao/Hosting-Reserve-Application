@@ -55,6 +55,7 @@ async function request(path, { method = 'GET', body, signal } = {}) {
 
 export const api = {
     listReservas: (params, signal) => request(`/api/reservas?${params.toString()}`, { signal }),
+    getResumen: () => request('/api/reservas/resumen'),
     getReserva: (id) => request(`/api/reservas/${encodeURIComponent(id)}`),
     createReserva: (data) => request('/api/reservas', { method: 'POST', body: data }),
     cambiarEstado: (id, estado) =>

@@ -1,10 +1,34 @@
+{# Icono del sprite public/assets/img/icons.svg (mismo que usa ui.js). #}
+{% macro icon(name, class) %}
+    <svg class="icon{{ class is defined ? ' ' ~ class : '' }}" aria-hidden="true" focusable="false"><use href="{{ asset('img/icons.svg') }}#{{ name }}"></use></svg>
+{%- endmacro %}
+
 {# Etiqueta de color para el estado de una reserva. #}
 {% macro badge(estado) %}
-    <span class="badge badge--{{ estado }}">{{ estado|capitalize }}</span>
-{% endmacro %}
+    <span class="badge badge--{{ estado }}"><span class="badge__dot" aria-hidden="true"></span>{{ estado|capitalize }}</span>
+{%- endmacro %}
 
 {# Importe con formato español: 1.234,50 € #}
 {% macro money(importe) %}{{ importe|number_format(2, ',', '.') }} €{% endmacro %}
+
+{# 'YYYY-MM-DD' → '12 oct 2026' (igual que formatDate en ui.js). #}
+{% macro fecha(iso) -%}
+    {%- set meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'] -%}
+    {{ iso|date('j') }} {{ meses[iso|date('n') - 1] }} {{ iso|date('Y') }}
+{%- endmacro %}
+
+{# Noches de la estancia: la salida no cuenta como noche. #}
+{% macro noches(entrada, salida) -%}
+    {%- set n = date(salida).diff(date(entrada)).days -%}
+    {{ n }} {{ n == 1 ? 'noche' : 'noches' }}
+{%- endmacro %}
+
+{# Iniciales del huésped sobre un color estable derivado del id (igual que avatar en ui.js). #}
+{% macro avatar(nombre, id, size) %}
+    <span class="avatar avatar--{{ id % 6 }}{{ size is defined ? ' avatar--' ~ size : '' }}" aria-hidden="true">
+        {{- nombre|split(' ')|filter(p => p != '')|slice(0, 2)|map(p => p|first|upper)|join -}}
+    </span>
+{%- endmacro %}
 
 {# Mensaje de error de un campo de formulario (el JS rellena el mismo elemento). #}
 {% macro field_error(name, errors) %}

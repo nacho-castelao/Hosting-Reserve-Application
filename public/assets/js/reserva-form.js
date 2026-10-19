@@ -1,12 +1,14 @@
-// Alta de reservas: validación en cliente (espejo de ReservaValidator) y envío por la API.
-// La validación del servidor sigue siendo la que manda; esto solo mejora la experiencia.
+// Alta de reservas en un panel lateral: validación en cliente (espejo de ReservaValidator)
+// y envío por la API. La validación del servidor sigue siendo la que manda.
 
 import { api } from './api.js';
-import { setBusy, showStatus } from './ui.js';
+import { formatDate, formatMoney, nights, nightsLabel, setBusy, showStatus } from './ui.js';
 
 const form = document.getElementById('reserva-form');
-const details = document.getElementById('nueva-reserva');
+const drawer = document.getElementById('nueva-reserva');
+const panel = drawer.querySelector('.drawer__panel');
 const submitButton = form.querySelector('button[type="submit"]');
+const staySummary = document.getElementById('estancia-resumen');
 
 const FIELDS = ['nombre_huesped', 'email_huesped', 'nombre_alojamiento', 'fecha_entrada', 'fecha_salida', 'importe', 'notas'];
 const MAX_LENGTHS = { nombre_huesped: 150, email_huesped: 254, nombre_alojamiento: 200, notas: 1000 };
@@ -97,10 +99,83 @@ function showErrors(errors) {
     first?.focus();
 }
 
+/* ---------- Panel lateral ---------- */
+
+// Sin JS el panel se abre con :target; con JS pasa a ser un diálogo modal. Se mueve al
+// final del <body> para poder dejar inerte el resto de la página mientras está abierto.
+document.body.append(drawer);
+drawer.classList.add('is-managed');
+panel.setAttribute('role', 'dialog');
+panel.setAttribute('aria-modal', 'true');
+const background = [...document.body.children].filter((node) => node.matches('header, main, footer'));
+let returnFocus = null;
+
+function openDrawer() {
+    returnFocus = document.activeElement;
+    drawer.classList.add('is-open');
+    document.body.classList.add('has-overlay');
+    background.forEach((node) => { node.inert = true; });
+    // Si vuelve con errores del servidor, el foco va al primer campo marcado.
+    const first = form.querySelector('[aria-invalid="true"]') ?? form.elements.nombre_huesped;
+    first.focus({ preventScroll: true });
+}
+
+function closeDrawer() {
+    drawer.classList.remove('is-open');
+    document.body.classList.remove('has-overlay');
+    background.forEach((node) => { node.inert = false; });
+    if (location.hash === '#nueva-reserva') {
+        history.replaceState(null, '', location.pathname + location.search);
+    }
+    returnFocus?.focus?.();
+}
+
+document.querySelectorAll('[data-drawer-open]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+        event.preventDefault();
+        openDrawer();
+    });
+});
+drawer.querySelectorAll('[data-drawer-close]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+        event.preventDefault();
+        closeDrawer();
+    });
+});
+drawer.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeDrawer();
+});
+
+// Abierto desde el servidor (errores de validación sin JS) o con #nueva-reserva en la URL.
+if (drawer.classList.contains('is-open') || location.hash === '#nueva-reserva') {
+    openDrawer();
+}
+
+/* ---------- Resumen de la estancia ---------- */
+
+function updateStaySummary() {
+    const { fecha_entrada: entrada, fecha_salida: salida, importe } = form.elements;
+    if (!isValidDate(entrada.value) || !isValidDate(salida.value) || salida.value <= entrada.value) {
+        staySummary.hidden = true;
+        return;
+    }
+    const n = nights(entrada.value, salida.value);
+    let text = `${nightsLabel(n)} · del ${formatDate(entrada.value)} al ${formatDate(salida.value)}`;
+    if (IMPORTE_RE.test(importe.value) && Number(importe.value) > 0) {
+        text += ` · ${formatMoney(Number(importe.value) / n)}/noche`;
+    }
+    staySummary.textContent = text;
+    staySummary.hidden = false;
+}
+
 // Al cambiar la entrada, la salida no puede ser anterior (ayuda del selector nativo).
 form.elements.fecha_entrada.addEventListener('change', (event) => {
     form.elements.fecha_salida.min = event.target.value;
 });
+['fecha_entrada', 'fecha_salida', 'importe'].forEach((name) => {
+    form.elements[name].addEventListener('input', updateStaySummary);
+});
+updateStaySummary();
 
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -123,7 +198,8 @@ form.addEventListener('submit', async (event) => {
     try {
         const { data: reserva } = await api.createReserva(payload);
         form.reset();
-        details.open = false;
+        updateStaySummary();
+        closeDrawer();
         showStatus(`Reserva #${reserva.id} creada para ${reserva.nombre_huesped}.`);
         document.dispatchEvent(new CustomEvent('reserva:creada', { detail: reserva }));
     } catch (error) {

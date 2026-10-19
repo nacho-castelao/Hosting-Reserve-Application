@@ -49,6 +49,18 @@ final class ReservaRepository implements ReservaRepositoryInterface
         return (int) $stmt->fetchColumn();
     }
 
+    public function totalesPorEstado(): array
+    {
+        $stmt = $this->pdo->query('SELECT estado, COUNT(*) AS total, SUM(importe) AS importe FROM reserva GROUP BY estado');
+
+        $totales = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $totales[(string) $row['estado']] = ['total' => (int) $row['total'], 'importe' => (string) $row['importe']];
+        }
+
+        return $totales;
+    }
+
     public function findById(int $id): ?array
     {
         $stmt = $this->pdo->prepare('SELECT ' . self::COLUMNS . ' FROM reserva WHERE id = :id');
