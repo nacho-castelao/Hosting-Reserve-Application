@@ -274,7 +274,7 @@ Hay dos formas de desplegar la aplicación. La demo pública usa la primera.
 
 Servidor IONOS VPS Linux S+ (1 vCore, 2 GB RAM, 60 GB NVMe), Ubuntu 24.04.5 LTS, datacenter en la UE. Acceso root por SSH con clave, sin contraseña.
 
-**Pila:** Nginx con el DocumentRoot en `public/`, PHP 8.3-FPM, MariaDB 10.11, certificado HTTPS de Let's Encrypt renovado automáticamente con certbot. Cortafuegos UFW (solo SSH, HTTP y HTTPS), actualizaciones de seguridad automáticas y 1 GB de swap.
+**Pila:** Nginx con el DocumentRoot en `public/`, PHP 8.3.6-FPM (la aplicación requiere PHP ≥ 8.1), MariaDB 10.11, certificado HTTPS de Let's Encrypt renovado automáticamente con certbot. Cortafuegos UFW (solo SSH, HTTP y HTTPS), actualizaciones de seguridad automáticas y 1 GB de swap.
 
 **Pasos resumidos:**
 
