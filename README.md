@@ -2,7 +2,7 @@
 
 Aplicación web para gestionar reservas de alojamientos: listado con filtros combinables, alta de reservas, detalle con historial de cambios y cancelación. Está construida en **PHP 8.1+ nativo, sin framework**, con arquitectura MVC, PDO + MySQL/MariaDB, vistas **Twig** y **JavaScript vanilla** (módulos ES + `fetch`).
 
-**Demo desplegada:** _pendiente — https://TU-DOMINIO/_
+**Demo desplegada:** <https://217-154-98-238.sslip.io/>
 
 ---
 
