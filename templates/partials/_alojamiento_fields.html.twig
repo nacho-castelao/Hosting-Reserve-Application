@@ -1,0 +1,32 @@
+{% import 'partials/_macros.html.twig' as ui %}
+{# Campos del alojamiento, comunes al alta y a la edición. #}
+<div class="form-grid">
+    <div class="field full">
+        <label for="nombre">Nombre</label>
+        <input id="nombre" name="nombre" type="text" required maxlength="{{ max_lengths.nombre }}" placeholder="Apartamento Centro"
+               value="{{ old.nombre ?? '' }}" aria-describedby="error-nombre"{% if form_errors.nombre is defined %} aria-invalid="true"{% endif %}>
+        {{ ui.field_error('nombre', form_errors) }}
+    </div>
+    <div class="field">
+        <label for="ciudad">Ciudad</label>
+        <input id="ciudad" name="ciudad" type="text" required maxlength="{{ max_lengths.ciudad }}" placeholder="Valencia"
+               value="{{ old.ciudad ?? '' }}" aria-describedby="error-ciudad"{% if form_errors.ciudad is defined %} aria-invalid="true"{% endif %}>
+        {{ ui.field_error('ciudad', form_errors) }}
+    </div>
+    <div class="field">
+        <label for="precio_noche">Precio por noche</label>
+        <div class="input-affix">
+            <input id="precio_noche" name="precio_noche" type="number" required min="0.01" step="0.01" max="99999999.99" inputmode="decimal"
+                   placeholder="0,00" value="{{ old.precio_noche ?? '' }}" aria-describedby="error-precio_noche"{% if form_errors.precio_noche is defined %} aria-invalid="true"{% endif %}>
+            <span class="input-affix__suffix" aria-hidden="true">€</span>
+        </div>
+        {{ ui.field_error('precio_noche', form_errors) }}
+    </div>
+    <div class="field full">
+        <label class="checkbox">
+            <input type="checkbox" name="activo" value="1"{% if (old.activo ?? '') == '1' %} checked{% endif %}>
+            <span>Activo: aparece en la web pública y admite reservas</span>
+        </label>
+        {{ ui.field_error('activo', form_errors) }}
+    </div>
+</div>

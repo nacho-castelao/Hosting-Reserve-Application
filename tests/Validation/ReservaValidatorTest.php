@@ -24,12 +24,11 @@ final class ReservaValidatorTest extends TestCase
     private static function validPayload(): array
     {
         return [
+            'alojamiento_id' => 3,
             'nombre_huesped' => '  María García  ',
             'email_huesped' => 'maria@example.com',
-            'nombre_alojamiento' => 'Hotel Gran Vía',
             'fecha_entrada' => '2026-10-15',
             'fecha_salida' => '2026-10-18',
-            'importe' => 450.5,
             'notas' => 'Llegada tarde',
         ];
     }
@@ -49,9 +48,10 @@ final class ReservaValidatorTest extends TestCase
     {
         $reserva = $this->validator->validateCreate(self::validPayload());
 
+        self::assertSame(3, $reserva->alojamientoId);
         self::assertSame('María García', $reserva->nombreHuesped);
         self::assertSame('2026-10-15', $reserva->fechaEntrada->format('Y-m-d'));
-        self::assertSame('450.50', $reserva->importe);
+        self::assertSame(3, $reserva->noches());
         self::assertSame('Llegada tarde', $reserva->notas);
     }
 
@@ -60,7 +60,7 @@ final class ReservaValidatorTest extends TestCase
         $errors = $this->errorsFor([]);
 
         self::assertEqualsCanonicalizing(
-            ['nombre_huesped', 'email_huesped', 'nombre_alojamiento', 'fecha_entrada', 'fecha_salida', 'importe'],
+            ['alojamiento_id', 'nombre_huesped', 'email_huesped', 'fecha_entrada', 'fecha_salida'],
             array_keys($errors),
         );
     }
@@ -95,6 +95,13 @@ final class ReservaValidatorTest extends TestCase
         yield 'anterior' => ['2026-10-01'];
     }
 
+    public function testStayCannotExceedMaxNights(): void
+    {
+        $errors = $this->errorsFor(['fecha_salida' => '2027-01-14'] + self::validPayload());
+
+        self::assertSame(['fecha_salida' => 'La estancia no puede superar las 90 noches.'], $errors);
+    }
+
     #[DataProvider('invalidDates')]
     public function testImpossibleOrMalformedDatesAreRejected(string $date): void
     {
@@ -120,22 +127,37 @@ final class ReservaValidatorTest extends TestCase
         self::assertSame(['fecha_entrada' => 'La fecha de entrada no puede ser anterior a hoy.'], $errors);
     }
 
-    #[DataProvider('invalidImportes')]
-    public function testInvalidImporteIsRejected(mixed $importe): void
+    public function testImporteIsServerControlled(): void
     {
-        $errors = $this->errorsFor(['importe' => $importe] + self::validPayload());
+        // El precio lo calcula el servidor a partir del alojamiento: el cliente no puede fijarlo.
+        $errors = $this->errorsFor(['importe' => '1.00'] + self::validPayload());
 
-        self::assertArrayHasKey('importe', $errors);
+        self::assertSame(['importe' => 'Este campo lo asigna el servidor y no se puede enviar.'], $errors);
+    }
+
+    #[DataProvider('invalidAlojamientoIds')]
+    public function testInvalidAlojamientoIdIsRejected(mixed $id): void
+    {
+        $errors = $this->errorsFor(['alojamiento_id' => $id] + self::validPayload());
+
+        self::assertSame(['alojamiento_id' => 'Identificador no válido.'], $errors);
     }
 
     /** @return iterable<string, array{mixed}> */
-    public static function invalidImportes(): iterable
+    public static function invalidAlojamientoIds(): iterable
     {
-        yield 'negativo' => [-10];
-        yield 'tres decimales' => ['10.555'];
-        yield 'texto' => ['diez'];
-        yield 'booleano' => [true];
-        yield 'demasiado grande' => ['100000000'];
+        yield 'cero' => [0];
+        yield 'negativo' => [-3];
+        yield 'decimal' => [1.5];
+        yield 'texto' => ['abc'];
+        yield 'cero inicial' => ['03'];
+    }
+
+    public function testAlojamientoIdAcceptsDigitStringFromForms(): void
+    {
+        $reserva = $this->validator->validateCreate(['alojamiento_id' => '7'] + self::validPayload());
+
+        self::assertSame(7, $reserva->alojamientoId);
     }
 
     public function testServerControlledAndUnknownFieldsAreRejected(): void

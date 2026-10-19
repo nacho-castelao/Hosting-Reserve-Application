@@ -6,11 +6,13 @@ namespace App\Controller\Api;
 
 use App\Core\JsonResponse;
 use App\Core\Request;
+use App\Domain\UsuarioActual;
 use App\Service\ReservaService;
 
 /**
  * Controlador fino de la API: traduce HTTP <-> servicio. Las excepciones
  * (validación, 404, 409…) las convierte en respuesta el ErrorHandler.
+ * Todo salvo store() exige sesión (lo comprueba App antes de llegar aquí).
  */
 final class ReservaController
 {
@@ -19,10 +21,10 @@ final class ReservaController
     }
 
     /** GET /api/reservas?estado=&desde=&hasta=&q=&limit= */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request, array $params, UsuarioActual $usuario): JsonResponse
     {
         $filtro = $this->service->parseFiltros($request->queryParams());
-        $result = $this->service->listar($filtro);
+        $result = $this->service->listar($filtro, $usuario);
 
         return JsonResponse::data($result['items'], 200, [
             'total' => $result['total'],
@@ -32,30 +34,29 @@ final class ReservaController
     }
 
     /** GET /api/reservas/resumen */
-    public function resumen(): JsonResponse
+    public function resumen(Request $request, array $params, UsuarioActual $usuario): JsonResponse
     {
-        return JsonResponse::data($this->service->resumen());
+        return JsonResponse::data($this->service->resumen($usuario));
     }
 
     /** GET /api/reservas/{id} */
-    public function show(Request $request, array $params): JsonResponse
+    public function show(Request $request, array $params, UsuarioActual $usuario): JsonResponse
     {
-        return JsonResponse::data($this->service->obtener((int) $params['id']));
+        return JsonResponse::data($this->service->obtener((int) $params['id'], $usuario));
     }
 
-    /** POST /api/reservas */
+    /**
+     * POST /api/reservas — alta pública del huésped. Sin cabecera Location: el
+     * detalle de una reserva solo lo pueden consultar su anfitrión y el administrador.
+     */
     public function store(Request $request): JsonResponse
     {
-        $reserva = $this->service->crear($request->json());
-
-        return JsonResponse::data($reserva, 201, null, [
-            'Location' => $request->basePath . '/api/reservas/' . $reserva['id'],
-        ]);
+        return JsonResponse::data($this->service->crear($request->json()), 201);
     }
 
     /** PATCH /api/reservas/{id}/estado */
-    public function updateEstado(Request $request, array $params): JsonResponse
+    public function updateEstado(Request $request, array $params, UsuarioActual $usuario): JsonResponse
     {
-        return JsonResponse::data($this->service->cambiarEstado((int) $params['id'], $request->json()));
+        return JsonResponse::data($this->service->cambiarEstado((int) $params['id'], $request->json(), $usuario));
     }
 }

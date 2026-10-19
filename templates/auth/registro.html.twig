@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+{% import 'partials/_macros.html.twig' as ui %}
+
+{% block title %}Registro de anfitriones{% endblock %}
+
+{% block content %}
+    <section class="card auth-card" aria-labelledby="registro-titulo">
+        <span class="catalog__icon">{{ ui.icon('user') }}</span>
+        <h1 id="registro-titulo" class="auth-card__title">Hazte anfitrión</h1>
+        <p class="muted">Crea tu cuenta, publica tus alojamientos con su precio por noche y gestiona las reservas.</p>
+
+        {% if error %}
+            <div class="alert alert--error" role="alert">{{ ui.icon('alert', 'alert__icon') }}<p>{{ error }}</p></div>
+        {% elseif form_errors is not empty %}
+            <div class="alert alert--error" role="alert">{{ ui.icon('alert', 'alert__icon') }}<p>Revisa los campos marcados.</p></div>
+        {% endif %}
+
+        <form method="post" action="{{ url('/registro') }}" class="auth-form">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+
+            <div class="field">
+                <label for="nombre">Nombre</label>
+                <input id="nombre" name="nombre" type="text" required maxlength="{{ max_lengths.nombre }}" autocomplete="name"
+                       value="{{ old.nombre ?? '' }}" aria-describedby="error-nombre"{% if form_errors.nombre is defined %} aria-invalid="true"{% endif %}>
+                {{ ui.field_error('nombre', form_errors) }}
+            </div>
+            <div class="field">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" required maxlength="{{ max_lengths.email }}" autocomplete="email"
+                       value="{{ old.email ?? '' }}" aria-describedby="error-email"{% if form_errors.email is defined %} aria-invalid="true"{% endif %}>
+                {{ ui.field_error('email', form_errors) }}
+            </div>
+            <div class="field">
+                <label for="password">Contraseña</label>
+                <input id="password" name="password" type="password" required minlength="{{ password_min }}" autocomplete="new-password"
+                       aria-describedby="hint-password error-password"{% if form_errors.password is defined %} aria-invalid="true"{% endif %}>
+                <p class="hint" id="hint-password">Al menos {{ password_min }} caracteres.</p>
+                {{ ui.field_error('password', form_errors) }}
+            </div>
+            <div class="field">
+                <label for="password_confirmacion">Repite la contraseña</label>
+                <input id="password_confirmacion" name="password_confirmacion" type="password" required autocomplete="new-password"
+                       aria-describedby="error-password_confirmacion"{% if form_errors.password_confirmacion is defined %} aria-invalid="true"{% endif %}>
+                {{ ui.field_error('password_confirmacion', form_errors) }}
+            </div>
+            <button type="submit" class="btn btn--primary auth-form__submit">{{ ui.icon('check') }} Crear cuenta</button>
+        </form>
+
+        <p class="auth-card__alt muted">¿Ya tienes cuenta? <a href="{{ url('/login') }}">Inicia sesión</a></p>
+    </section>
+{% endblock %}

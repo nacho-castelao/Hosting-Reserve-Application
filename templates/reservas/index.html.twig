@@ -2,17 +2,24 @@
 {% import 'partials/_macros.html.twig' as ui %}
 
 {% block title %}Listado de reservas{% endblock %}
+{% block nav %}reservas{% endblock %}
 
 {% block content %}
+    {% set usuario = usuario_actual() %}
     <div class="page-header">
         <div>
             <p class="eyebrow">Panel</p>
             <h1>Reservas</h1>
-            <p class="page-header__lead">Consulta las estancias, confirma las pendientes y da de alta nuevas reservas.</p>
+            <p class="page-header__lead">
+                {% if usuario.rol == 'admin' %}
+                    Todas las reservas de todos los anfitriones. Confirma las pendientes o cancélalas.
+                {% else %}
+                    Las reservas de tus alojamientos. Los huéspedes reservan desde la web pública y tú las confirmas o cancelas.
+                {% endif %}
+            </p>
         </div>
-        {# Sin JS abre el panel con :target; con JS se gestiona como diálogo modal. #}
-        <a class="btn btn--primary" href="#nueva-reserva" data-drawer-open>
-            {{ ui.icon('plus') }} Nueva reserva
+        <a class="btn btn--secondary" href="{{ url('/panel/alojamientos') }}">
+            {{ ui.icon('home') }} Mis alojamientos
         </a>
     </div>
 
@@ -64,7 +71,7 @@
     <section class="card card--flush" aria-labelledby="listado-titulo">
         <h2 id="listado-titulo" class="visually-hidden">Listado de reservas</h2>
 
-        <form id="filtros" class="filters" method="get" action="{{ url('/') }}" novalidate>
+        <form id="filtros" class="filters" method="get" action="{{ url('/panel') }}" novalidate>
             <fieldset class="segmented">
                 <legend class="visually-hidden">Estado</legend>
                 <label class="segmented__option">
@@ -98,7 +105,7 @@
                 <div class="filters__actions">
                     {# Con JS los filtros se aplican al escribir; el botón queda para el modo sin JS. #}
                     <button type="submit" class="btn btn--secondary" id="filtros-aplicar">Filtrar</button>
-                    <a class="btn btn--ghost" href="{{ url('/') }}" id="filtros-limpiar">Limpiar</a>
+                    <a class="btn btn--ghost" href="{{ url('/panel') }}" id="filtros-limpiar">Limpiar</a>
                 </div>
             </div>
             <p class="hint">El rango de fechas muestra las reservas cuya estancia se solapa con él.</p>
@@ -133,101 +140,8 @@
         </div>
     </section>
 
-    {# Panel lateral de alta. Visible sin JS vía :target o si el servidor devolvió errores. #}
-    <div class="drawer{% if form_errors is not empty %} is-open{% endif %}" id="nueva-reserva">
-        <a class="drawer__backdrop" href="{{ url('/') }}" tabindex="-1" aria-hidden="true" data-drawer-close></a>
-        <section class="drawer__panel" aria-labelledby="drawer-title">
-            <form id="reserva-form" method="post" action="{{ url('/reservas') }}" class="drawer__form">
-                <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-
-                <header class="drawer__header">
-                    <div>
-                        <h2 id="drawer-title" class="drawer__title">Nueva reserva</h2>
-                        <p class="muted">Se creará en estado pendiente.</p>
-                    </div>
-                    <a class="icon-btn" href="{{ url('/') }}" data-drawer-close aria-label="Cerrar">{{ ui.icon('x') }}</a>
-                </header>
-
-                <div class="drawer__body">
-                    {% if form_errors is not empty %}
-                        <div class="alert alert--error" role="alert">{{ ui.icon('alert', 'alert__icon') }}<p>Revisa los campos marcados.</p></div>
-                    {% endif %}
-
-                    <fieldset class="form-section">
-                        <legend class="form-section__title">{{ ui.icon('user') }} Huésped</legend>
-                        <div class="form-grid">
-                            <div class="field full">
-                                <label for="nombre_huesped">Nombre completo</label>
-                                <input id="nombre_huesped" name="nombre_huesped" type="text" required maxlength="{{ max_lengths.nombre_huesped }}"
-                                       autocomplete="name" placeholder="Ana García López" value="{{ old.nombre_huesped ?? '' }}" aria-describedby="error-nombre_huesped">
-                                {{ ui.field_error('nombre_huesped', form_errors) }}
-                            </div>
-                            <div class="field full">
-                                <label for="email_huesped">Email</label>
-                                <input id="email_huesped" name="email_huesped" type="email" required maxlength="{{ max_lengths.email_huesped }}"
-                                       autocomplete="email" placeholder="ana@ejemplo.com" value="{{ old.email_huesped ?? '' }}" aria-describedby="error-email_huesped">
-                                {{ ui.field_error('email_huesped', form_errors) }}
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset class="form-section">
-                        <legend class="form-section__title">{{ ui.icon('home') }} Estancia</legend>
-                        <div class="form-grid">
-                            <div class="field full">
-                                <label for="nombre_alojamiento">Alojamiento</label>
-                                <input id="nombre_alojamiento" name="nombre_alojamiento" type="text" required maxlength="{{ max_lengths.nombre_alojamiento }}"
-                                       placeholder="Apartamento Centro" value="{{ old.nombre_alojamiento ?? '' }}" aria-describedby="error-nombre_alojamiento">
-                                {{ ui.field_error('nombre_alojamiento', form_errors) }}
-                            </div>
-                            <div class="field">
-                                <label for="fecha_entrada">Entrada</label>
-                                <input id="fecha_entrada" name="fecha_entrada" type="date" required min="{{ today }}"
-                                       value="{{ old.fecha_entrada ?? '' }}" aria-describedby="error-fecha_entrada">
-                                {{ ui.field_error('fecha_entrada', form_errors) }}
-                            </div>
-                            <div class="field">
-                                <label for="fecha_salida">Salida</label>
-                                <input id="fecha_salida" name="fecha_salida" type="date" required
-                                       value="{{ old.fecha_salida ?? '' }}" aria-describedby="error-fecha_salida">
-                                {{ ui.field_error('fecha_salida', form_errors) }}
-                            </div>
-                            <p class="stay-summary full" id="estancia-resumen" aria-live="polite" hidden></p>
-                        </div>
-                    </fieldset>
-
-                    <fieldset class="form-section">
-                        <legend class="form-section__title">{{ ui.icon('euro') }} Pago</legend>
-                        <div class="form-grid">
-                            <div class="field full">
-                                <label for="importe">Importe total</label>
-                                <div class="input-affix">
-                                    <input id="importe" name="importe" type="number" required min="0" step="0.01" max="99999999.99" inputmode="decimal"
-                                           placeholder="0,00" value="{{ old.importe ?? '' }}" aria-describedby="error-importe">
-                                    <span class="input-affix__suffix" aria-hidden="true">€</span>
-                                </div>
-                                {{ ui.field_error('importe', form_errors) }}
-                            </div>
-                            <div class="field full">
-                                <label for="notas">Notas <span class="optional">opcional</span></label>
-                                <textarea id="notas" name="notas" rows="3" maxlength="{{ max_lengths.notas }}"
-                                          placeholder="Llegada tarde, cuna, mascotas…" aria-describedby="error-notas">{{ old.notas ?? '' }}</textarea>
-                                {{ ui.field_error('notas', form_errors) }}
-                            </div>
-                        </div>
-                    </fieldset>
-                </div>
-
-                <footer class="drawer__footer">
-                    <a class="btn btn--secondary" href="{{ url('/') }}" data-drawer-close>Cancelar</a>
-                    <button type="submit" class="btn btn--primary">{{ ui.icon('check') }} Crear reserva</button>
-                </footer>
-            </form>
-        </section>
-    </div>
 {% endblock %}
 
 {% block scripts %}
     <script type="module" src="{{ asset('js/reservas-list.js') }}"></script>
-    <script type="module" src="{{ asset('js/reserva-form.js') }}"></script>
 {% endblock %}

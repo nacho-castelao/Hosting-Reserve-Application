@@ -1940,3 +1940,256 @@ textarea:focus-visible {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* ---------- Navegación del panel y sesión ---------- */
+
+.main-nav {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.main-nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-2);
+    font-size: 0.875rem;
+    font-weight: 550;
+    text-decoration: none;
+}
+
+.main-nav a:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+}
+
+.main-nav a[aria-current="page"] {
+    background: var(--primary-soft);
+    color: var(--primary-text);
+}
+
+/* En móvil solo iconos: el texto queda para lectores de pantalla. */
+.main-nav a span,
+.user-chip span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.logout-form {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+    padding-left: 0.5rem;
+    border-left: 1px solid var(--border);
+}
+
+.user-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--muted);
+    font-size: 0.8125rem;
+}
+
+.timeline__actor {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+/* ---------- Catálogo público y reserva ---------- */
+
+.catalog {
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.catalog__item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0;
+    transition: border-color 0.15s, transform 0.15s var(--ease);
+}
+
+.catalog__item:hover {
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+    transform: translateY(-2px);
+}
+
+.catalog__icon {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: var(--radius);
+    background: var(--primary-soft);
+    color: var(--primary-text);
+}
+
+.catalog__title {
+    margin: 0;
+    font-size: 1.0625rem;
+}
+
+/* Toda la tarjeta es clicable sin anidar enlaces. */
+.catalog__link {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.catalog__link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+}
+
+.catalog__city {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin: 0;
+}
+
+.catalog__price {
+    margin: 0.5rem 0 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.catalog__price strong {
+    font-size: 1.25rem;
+}
+
+.booking {
+    display: grid;
+    gap: 0 1.25rem;
+}
+
+.booking__title {
+    margin: 0;
+}
+
+.booking__footer,
+.form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+}
+
+.confirmation {
+    max-width: 36rem;
+    margin: 2rem auto;
+    text-align: center;
+}
+
+.confirmation__icon {
+    margin: 0 auto 0.5rem;
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.confirmation__details {
+    margin: 1.5rem 0 1rem;
+    text-align: left;
+}
+
+/* ---------- Acceso y panel ---------- */
+
+.auth-card,
+.form-card {
+    max-width: 28rem;
+    margin: 2rem auto;
+}
+
+.form-card {
+    max-width: 40rem;
+}
+
+.auth-card__title {
+    margin: 0 0 0.25rem;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-top: 1.25rem;
+}
+
+.auth-form__submit {
+    justify-content: center;
+    margin-top: 0.25rem;
+}
+
+.auth-card__alt {
+    margin: 1.25rem 0 0;
+    font-size: 0.875rem;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 450;
+}
+
+.checkbox input {
+    width: auto;
+    min-height: 0;
+    box-shadow: none;
+}
+
+.card__title--padded {
+    padding: 1.25rem 1.25rem 0;
+}
+
+.panel-grid {
+    display: grid;
+    gap: 0 1.25rem;
+}
+
+@media (min-width: 640px) {
+    .catalog {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 960px) {
+    .catalog {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .main-nav a span,
+    .user-chip span {
+        position: static;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        clip: auto;
+    }
+
+    .booking {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+        align-items: start;
+    }
+
+    .panel-grid {
+        grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+        align-items: start;
+    }
+}

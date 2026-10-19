@@ -4,7 +4,7 @@
     <td data-label="Huésped" class="cell-guest">
         {{ ui.avatar(reserva.nombre_huesped, reserva.id) }}
         <span class="cell-guest__text">
-            <a class="row-link" href="{{ url('/reservas/' ~ reserva.id) }}">{{ reserva.nombre_huesped }}</a>
+            <a class="row-link" href="{{ url('/panel/reservas/' ~ reserva.id) }}">{{ reserva.nombre_huesped }}</a>
             <span class="muted">{{ reserva.email_huesped }}</span>
         </span>
     </td>
@@ -35,6 +35,6 @@
                 </button>
             {% endif %}
         </span>
-        <a class="icon-btn icon-btn--small" href="{{ url('/reservas/' ~ reserva.id) }}" aria-label="Ver reserva #{{ reserva.id }}">{{ ui.icon('chevron-right') }}</a>
+        <a class="icon-btn icon-btn--small" href="{{ url('/panel/reservas/' ~ reserva.id) }}" aria-label="Ver reserva #{{ reserva.id }}">{{ ui.icon('chevron-right') }}</a>
     </td>
 </tr>

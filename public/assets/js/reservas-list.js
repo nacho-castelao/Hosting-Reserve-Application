@@ -34,7 +34,7 @@ function timeEl(iso) {
 /** Misma estructura que templates/partials/_reserva_row.html.twig. */
 function renderRow(reserva) {
     const tr = el('tr', { attrs: { 'data-id': String(reserva.id) } });
-    const href = `${BASE_URL}/reservas/${reserva.id}`;
+    const href = `${BASE_URL}/panel/reservas/${reserva.id}`;
 
     const guestText = el('span', { className: 'cell-guest__text' });
     guestText.append(
@@ -81,8 +81,8 @@ function renderEmpty() {
     box.append(
         iconBox,
         el('p', { className: 'empty-state__title', text: 'No hay reservas que coincidan' }),
-        el('p', { className: 'muted', text: 'Prueba con otros filtros o crea una reserva nueva.' }),
-        el('a', { className: 'btn btn--secondary btn--small js-clear-filters', text: 'Limpiar filtros', attrs: { href: `${BASE_URL}/` } }),
+        el('p', { className: 'muted', text: 'Prueba con otros filtros.' }),
+        el('a', { className: 'btn btn--secondary btn--small js-clear-filters', text: 'Limpiar filtros', attrs: { href: `${BASE_URL}/panel` } }),
     );
     const td = el('td', { attrs: { colspan: '6' } });
     td.append(box);
@@ -153,7 +153,7 @@ async function load() {
     controller = new AbortController();
 
     const query = params.toString();
-    history.replaceState(null, '', `${BASE_URL}/${query ? `?${query}` : ''}`);
+    history.replaceState(null, '', `${BASE_URL}/panel${query ? `?${query}` : ''}`);
 
     tbody.setAttribute('aria-busy', 'true');
     try {
@@ -213,9 +213,5 @@ tbody.addEventListener('click', async (event) => {
     row.querySelector('.js-estado, .actions .icon-btn')?.focus();
 });
 
-// Al crear o cambiar una reserva se refrescan el resumen y, si hace falta, el listado.
-document.addEventListener('reserva:creada', () => {
-    load();
-    refreshStats();
-});
+// Al cambiar el estado de una reserva se refresca el resumen.
 document.addEventListener('reserva:actualizada', refreshStats);

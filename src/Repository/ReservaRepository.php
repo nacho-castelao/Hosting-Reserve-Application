@@ -7,6 +7,7 @@ namespace App\Repository;
 use App\Domain\EstadoReserva;
 use App\Domain\FiltroReservas;
 use App\Domain\NuevaReserva;
+use DateTimeImmutable;
 use PDO;
 
 /**
@@ -15,8 +16,10 @@ use PDO;
  */
 final class ReservaRepository implements ReservaRepositoryInterface
 {
-    private const COLUMNS = 'id, nombre_huesped, email_huesped, nombre_alojamiento, fecha_entrada, '
-        . 'fecha_salida, estado, importe, notas, fecha_creacion';
+    private const COLUMNS = 'r.id, r.alojamiento_id, a.nombre AS nombre_alojamiento, a.anfitrion_id, r.nombre_huesped, '
+        . 'r.email_huesped, r.fecha_entrada, r.fecha_salida, r.estado, r.importe, r.notas, r.fecha_creacion';
+
+    private const FROM = ' FROM reserva r JOIN alojamiento a ON a.id = r.alojamiento_id';
 
     public function __construct(private readonly PDO $pdo)
     {
@@ -27,8 +30,8 @@ final class ReservaRepository implements ReservaRepositoryInterface
         [$where, $params] = $this->buildWhere($filtro);
 
         $stmt = $this->pdo->prepare(
-            'SELECT ' . self::COLUMNS . ' FROM reserva' . $where
-            . ' ORDER BY fecha_entrada DESC, id DESC LIMIT :limit'
+            'SELECT ' . self::COLUMNS . self::FROM . $where
+            . ' ORDER BY r.fecha_entrada DESC, r.id DESC LIMIT :limit'
         );
         foreach ($params as $name => $value) {
             $stmt->bindValue($name, $value);
@@ -43,15 +46,22 @@ final class ReservaRepository implements ReservaRepositoryInterface
     {
         [$where, $params] = $this->buildWhere($filtro);
 
-        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM reserva' . $where);
+        $stmt = $this->pdo->prepare('SELECT COUNT(*)' . self::FROM . $where);
         $stmt->execute($params);
 
         return (int) $stmt->fetchColumn();
     }
 
-    public function totalesPorEstado(): array
+    public function totalesPorEstado(?int $anfitrionId): array
     {
-        $stmt = $this->pdo->query('SELECT estado, COUNT(*) AS total, SUM(importe) AS importe FROM reserva GROUP BY estado');
+        $sql = 'SELECT r.estado, COUNT(*) AS total, SUM(r.importe) AS importe' . self::FROM;
+        $params = [];
+        if ($anfitrionId !== null) {
+            $sql .= ' WHERE a.anfitrion_id = :anfitrion';
+            $params[':anfitrion'] = $anfitrionId;
+        }
+        $stmt = $this->pdo->prepare($sql . ' GROUP BY r.estado');
+        $stmt->execute($params);
 
         $totales = [];
         foreach ($stmt->fetchAll() as $row) {
@@ -63,7 +73,7 @@ final class ReservaRepository implements ReservaRepositoryInterface
 
     public function findById(int $id): ?array
     {
-        $stmt = $this->pdo->prepare('SELECT ' . self::COLUMNS . ' FROM reserva WHERE id = :id');
+        $stmt = $this->pdo->prepare('SELECT ' . self::COLUMNS . self::FROM . ' WHERE r.id = :id');
         $stmt->execute([':id' => $id]);
         $row = $stmt->fetch();
 
@@ -72,27 +82,45 @@ final class ReservaRepository implements ReservaRepositoryInterface
 
     public function findByIdForUpdate(int $id): ?array
     {
-        $stmt = $this->pdo->prepare('SELECT ' . self::COLUMNS . ' FROM reserva WHERE id = :id FOR UPDATE');
+        $stmt = $this->pdo->prepare('SELECT ' . self::COLUMNS . self::FROM . ' WHERE r.id = :id FOR UPDATE');
         $stmt->execute([':id' => $id]);
         $row = $stmt->fetch();
 
         return $row === false ? null : $this->hydrate($row);
     }
 
-    public function insert(NuevaReserva $reserva): int
+    public function haySolapamiento(int $alojamientoId, DateTimeImmutable $entrada, DateTimeImmutable $salida): bool
+    {
+        // Dos estancias [e1, s1) y [e2, s2) comparten alguna noche si e1 < s2 y s1 > e2.
+        $stmt = $this->pdo->prepare(
+            "SELECT 1 FROM reserva
+             WHERE alojamiento_id = :alojamiento AND estado IN ('pendiente', 'confirmada')
+               AND fecha_entrada < :salida AND fecha_salida > :entrada
+             LIMIT 1"
+        );
+        $stmt->execute([
+            ':alojamiento' => $alojamientoId,
+            ':entrada' => $entrada->format('Y-m-d'),
+            ':salida' => $salida->format('Y-m-d'),
+        ]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
+    public function insert(NuevaReserva $reserva, string $importe): int
     {
         // estado y fecha_creacion toman su DEFAULT de la tabla: el cliente no los controla.
         $stmt = $this->pdo->prepare(
-            'INSERT INTO reserva (nombre_huesped, email_huesped, nombre_alojamiento, fecha_entrada, fecha_salida, importe, notas)
-             VALUES (:nombre_huesped, :email_huesped, :nombre_alojamiento, :fecha_entrada, :fecha_salida, :importe, :notas)'
+            'INSERT INTO reserva (alojamiento_id, nombre_huesped, email_huesped, fecha_entrada, fecha_salida, importe, notas)
+             VALUES (:alojamiento_id, :nombre_huesped, :email_huesped, :fecha_entrada, :fecha_salida, :importe, :notas)'
         );
         $stmt->execute([
+            ':alojamiento_id' => $reserva->alojamientoId,
             ':nombre_huesped' => $reserva->nombreHuesped,
             ':email_huesped' => $reserva->emailHuesped,
-            ':nombre_alojamiento' => $reserva->nombreAlojamiento,
             ':fecha_entrada' => $reserva->fechaEntrada->format('Y-m-d'),
             ':fecha_salida' => $reserva->fechaSalida->format('Y-m-d'),
-            ':importe' => $reserva->importe,
+            ':importe' => $importe,
             ':notas' => $reserva->notas,
         ]);
 
@@ -109,32 +137,38 @@ final class ReservaRepository implements ReservaRepositoryInterface
      * Construye el WHERE a partir de los filtros. Solo se concatenan fragmentos
      * de SQL fijos; los valores van siempre como parámetros.
      *
-     * @return array{0: string, 1: array<string, string>}
+     * @return array{0: string, 1: array<string, string|int>}
      */
     private function buildWhere(FiltroReservas $filtro): array
     {
         $conditions = [];
         $params = [];
 
+        // Un anfitrión solo ve las reservas de sus alojamientos.
+        if ($filtro->anfitrionId !== null) {
+            $conditions[] = 'a.anfitrion_id = :anfitrion';
+            $params[':anfitrion'] = $filtro->anfitrionId;
+        }
+
         if ($filtro->estado !== null) {
-            $conditions[] = 'estado = :estado';
+            $conditions[] = 'r.estado = :estado';
             $params[':estado'] = $filtro->estado->value;
         }
 
         // Solapamiento: la estancia ocupa las noches [fecha_entrada, fecha_salida).
         // Coincide con el rango [desde, hasta] si entra como tarde "hasta" y sale después de "desde".
         if ($filtro->hasta !== null) {
-            $conditions[] = 'fecha_entrada <= :hasta';
+            $conditions[] = 'r.fecha_entrada <= :hasta';
             $params[':hasta'] = $filtro->hasta->format('Y-m-d');
         }
         if ($filtro->desde !== null) {
-            $conditions[] = 'fecha_salida > :desde';
+            $conditions[] = 'r.fecha_salida > :desde';
             $params[':desde'] = $filtro->desde->format('Y-m-d');
         }
 
         if ($filtro->q !== null) {
             // '!' como carácter de escape: no depende del modo NO_BACKSLASH_ESCAPES de MySQL.
-            $conditions[] = "nombre_huesped LIKE :q ESCAPE '!'";
+            $conditions[] = "r.nombre_huesped LIKE :q ESCAPE '!'";
             $params[':q'] = '%' . self::escapeLike($filtro->q) . '%';
         }
 
@@ -157,9 +191,11 @@ final class ReservaRepository implements ReservaRepositoryInterface
     {
         return [
             'id' => (int) $row['id'],
+            'alojamiento_id' => (int) $row['alojamiento_id'],
+            'nombre_alojamiento' => (string) $row['nombre_alojamiento'],
+            'anfitrion_id' => (int) $row['anfitrion_id'],
             'nombre_huesped' => (string) $row['nombre_huesped'],
             'email_huesped' => (string) $row['email_huesped'],
-            'nombre_alojamiento' => (string) $row['nombre_alojamiento'],
             'fecha_entrada' => (string) $row['fecha_entrada'],
             'fecha_salida' => (string) $row['fecha_salida'],
             'estado' => (string) $row['estado'],

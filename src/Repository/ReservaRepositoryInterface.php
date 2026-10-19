@@ -7,10 +7,12 @@ namespace App\Repository;
 use App\Domain\EstadoReserva;
 use App\Domain\FiltroReservas;
 use App\Domain\NuevaReserva;
+use DateTimeImmutable;
 
 /**
  * Las filas se devuelven como arrays con tipos ya normalizados
- * (id int, importe string decimal, fechas 'Y-m-d' / 'Y-m-d H:i:s').
+ * (id int, importe string decimal, fechas 'Y-m-d' / 'Y-m-d H:i:s') e incluyen
+ * los datos del alojamiento (alojamiento_id, nombre_alojamiento, anfitrion_id).
  */
 interface ReservaRepositoryInterface
 {
@@ -20,12 +22,13 @@ interface ReservaRepositoryInterface
     public function count(FiltroReservas $filtro): int;
 
     /**
-     * Número de reservas y suma de importes agrupados por estado (sin filtros).
+     * Número de reservas y suma de importes agrupados por estado. Con
+     * $anfitrionId solo cuenta las reservas de sus alojamientos.
      * Los estados sin reservas no aparecen.
      *
      * @return array<string, array{total: int, importe: string}>
      */
-    public function totalesPorEstado(): array;
+    public function totalesPorEstado(?int $anfitrionId): array;
 
     /** @return array<string, mixed>|null */
     public function findById(int $id): ?array;
@@ -38,8 +41,17 @@ interface ReservaRepositoryInterface
      */
     public function findByIdForUpdate(int $id): ?array;
 
-    /** @return int id de la reserva creada */
-    public function insert(NuevaReserva $reserva): int;
+    /**
+     * ¿Hay alguna reserva activa (pendiente o confirmada) del alojamiento que
+     * ocupe alguna noche de [entrada, salida)?
+     */
+    public function haySolapamiento(int $alojamientoId, DateTimeImmutable $entrada, DateTimeImmutable $salida): bool;
+
+    /**
+     * @param string $importe Importe calculado por el servidor.
+     * @return int id de la reserva creada
+     */
+    public function insert(NuevaReserva $reserva, string $importe): int;
 
     public function updateEstado(int $id, EstadoReserva $estado): void;
 }

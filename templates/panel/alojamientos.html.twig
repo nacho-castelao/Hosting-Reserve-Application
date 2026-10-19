@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+{% import 'partials/_macros.html.twig' as ui %}
+
+{% block title %}Alojamientos{% endblock %}
+{% block nav %}alojamientos{% endblock %}
+
+{% block content %}
+    {% set usuario = usuario_actual() %}
+    <div class="page-header">
+        <div>
+            <p class="eyebrow">Panel</p>
+            <h1>{{ usuario.rol == 'admin' ? 'Alojamientos' : 'Mis alojamientos' }}</h1>
+            <p class="page-header__lead">El precio por noche fija el importe de cada reserva nueva. Cambiarlo no altera las reservas ya hechas.</p>
+        </div>
+    </div>
+
+    {% if bienvenida %}
+        <div class="alert alert--success" role="status">{{ ui.icon('check-circle', 'alert__icon') }}<p>Cuenta creada. Da de alta tu primer alojamiento para empezar a recibir reservas.</p></div>
+    {% elseif guardado %}
+        <div class="alert alert--success" role="status">{{ ui.icon('check-circle', 'alert__icon') }}<p>Alojamiento guardado.</p></div>
+    {% endif %}
+
+    <div class="panel-grid">
+        <section class="card card--flush" aria-labelledby="listado-titulo">
+            <h2 id="listado-titulo" class="card__title card__title--padded">Listado</h2>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Alojamiento</th>
+                            {% if usuario.rol == 'admin' %}<th scope="col">Anfitrión</th>{% endif %}
+                            <th scope="col" class="num">Precio / noche</th>
+                            <th scope="col" class="num">Reservas</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col"><span class="visually-hidden">Acciones</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alojamiento in alojamientos %}
+                            <tr>
+                                <td data-label="Alojamiento">
+                                    <span class="cell-guest__text">
+                                        <a class="row-link" href="{{ url('/panel/alojamientos/' ~ alojamiento.id) }}">{{ alojamiento.nombre }}</a>
+                                        <span class="muted">{{ alojamiento.ciudad }}</span>
+                                    </span>
+                                </td>
+                                {% if usuario.rol == 'admin' %}<td data-label="Anfitrión">{{ alojamiento.anfitrion }}</td>{% endif %}
+                                <td data-label="Precio / noche" class="num">{{ ui.money(alojamiento.precio_noche) }}</td>
+                                <td data-label="Reservas" class="num">{{ alojamiento.reservas }}</td>
+                                <td data-label="Estado">
+                                    <span class="badge badge--{{ alojamiento.activo ? 'confirmada' : 'cancelada' }}"><span class="badge__dot" aria-hidden="true"></span>{{ alojamiento.activo ? 'Activo' : 'Inactivo' }}</span>
+                                </td>
+                                <td data-label="Acciones" class="actions">
+                                    <a class="icon-btn icon-btn--small" href="{{ url('/panel/alojamientos/' ~ alojamiento.id) }}" aria-label="Editar {{ alojamiento.nombre }}">{{ ui.icon('edit') }}</a>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr class="empty-row">
+                                <td colspan="{{ usuario.rol == 'admin' ? 6 : 5 }}">
+                                    <div class="empty-state">
+                                        <span class="empty-state__icon">{{ ui.icon('home') }}</span>
+                                        <p class="empty-state__title">Todavía no hay alojamientos</p>
+                                        <p class="muted">Usa el formulario para dar de alta el primero.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card" aria-labelledby="alta-titulo">
+            <h2 id="alta-titulo" class="card__title">Nuevo alojamiento</h2>
+            {% if form_errors is not empty %}
+                <div class="alert alert--error" role="alert">{{ ui.icon('alert', 'alert__icon') }}<p>Revisa los campos marcados.</p></div>
+            {% endif %}
+            <form method="post" action="{{ url('/panel/alojamientos') }}">
+                <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                {% include 'partials/_alojamiento_fields.html.twig' with { old: old, form_errors: form_errors, max_lengths: max_lengths } only %}
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary">{{ ui.icon('plus') }} Crear alojamiento</button>
+                </div>
+            </form>
+        </section>
+    </div>
+{% endblock %}

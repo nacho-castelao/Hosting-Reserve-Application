@@ -18,6 +18,7 @@ function renderTimeline(eventos) {
         body.append(
             el('p', { className: 'timeline__text', text: evento.descripcion }),
             el('time', { text: formatDateTime(evento.fecha_creacion), attrs: { datetime: evento.fecha_creacion.replace(' ', 'T') } }),
+            el('span', { className: 'timeline__actor', text: evento.usuario ?? 'Huésped (web pública)' }),
         );
 
         li.append(dot, body);

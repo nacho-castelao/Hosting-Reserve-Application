@@ -18,14 +18,32 @@
 
     <header class="site-header">
         <div class="container site-header__inner">
-            <a class="brand" href="{{ url('/') }}">
+            {% set usuario = usuario_actual() %}
+            <a class="brand" href="{{ url(usuario ? '/panel' : '/') }}">
                 <span class="brand__mark">{{ ui.icon('logo') }}</span>
                 <span class="brand__text">
                     <span class="brand__name">Gestor de reservas</span>
-                    <span class="brand__tagline">Alojamientos</span>
+                    <span class="brand__tagline">{{ usuario ? 'Panel · ' ~ usuario.rol_label : 'Alojamientos' }}</span>
                 </span>
             </a>
             <div class="site-header__actions">
+                {% if usuario %}
+                    {% set seccion = block('nav') is defined ? block('nav')|trim : '' %}
+                    <nav class="main-nav" aria-label="Panel">
+                        <a href="{{ url('/panel') }}"{% if seccion == 'reservas' %} aria-current="page"{% endif %}>{{ ui.icon('layers') }}<span>Reservas</span></a>
+                        <a href="{{ url('/panel/alojamientos') }}"{% if seccion == 'alojamientos' %} aria-current="page"{% endif %}>{{ ui.icon('home') }}<span>Alojamientos</span></a>
+                        {% if usuario.rol == 'admin' %}
+                            <a href="{{ url('/panel/usuarios') }}"{% if seccion == 'usuarios' %} aria-current="page"{% endif %}>{{ ui.icon('users') }}<span>Anfitriones</span></a>
+                        {% endif %}
+                    </nav>
+                    <form method="post" action="{{ url('/logout') }}" class="logout-form">
+                        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                        <span class="user-chip" title="{{ usuario.email }}">{{ ui.icon('user') }}<span>{{ usuario.nombre }}</span></span>
+                        <button type="submit" class="icon-btn" aria-label="Cerrar sesión" title="Cerrar sesión">{{ ui.icon('log-out') }}</button>
+                    </form>
+                {% else %}
+                    <a class="btn btn--ghost btn--small" href="{{ url('/login') }}">{{ ui.icon('log-in') }}<span>Acceso anfitriones</span></a>
+                {% endif %}
                 <button type="button" class="icon-btn" id="theme-toggle" aria-label="Cambiar a tema oscuro" hidden>
                     {{ ui.icon('moon', 'theme-icon theme-icon--moon') }}
                     {{ ui.icon('sun', 'theme-icon theme-icon--sun') }}

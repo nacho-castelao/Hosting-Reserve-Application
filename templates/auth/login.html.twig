@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+{% import 'partials/_macros.html.twig' as ui %}
+
+{% block title %}Iniciar sesión{% endblock %}
+
+{% block content %}
+    <section class="card auth-card" aria-labelledby="login-titulo">
+        <span class="catalog__icon">{{ ui.icon('log-in') }}</span>
+        <h1 id="login-titulo" class="auth-card__title">Acceso anfitriones</h1>
+        <p class="muted">Gestiona tus alojamientos y las reservas que reciben.</p>
+
+        {% if error %}
+            <div class="alert alert--error" role="alert">{{ ui.icon('alert', 'alert__icon') }}<p>{{ error }}</p></div>
+        {% endif %}
+
+        <form method="post" action="{{ url('/login') }}" class="auth-form">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+            <div class="field">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" required autocomplete="username" value="{{ email }}" autofocus>
+            </div>
+            <div class="field">
+                <label for="password">Contraseña</label>
+                <input id="password" name="password" type="password" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn--primary auth-form__submit">{{ ui.icon('log-in') }} Entrar</button>
+        </form>
+
+        <p class="auth-card__alt muted">¿Tienes alojamientos y aún no tienes cuenta? <a href="{{ url('/registro') }}">Regístrate como anfitrión</a></p>
+    </section>
+{% endblock %}

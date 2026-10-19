@@ -1,0 +1,55 @@
+{% extends 'base.html.twig' %}
+{% import 'partials/_macros.html.twig' as ui %}
+
+{% block title %}Anfitriones{% endblock %}
+{% block nav %}usuarios{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <div>
+            <p class="eyebrow">Administración</p>
+            <h1>Anfitriones</h1>
+            <p class="page-header__lead">Cuentas registradas como anfitrión, con sus alojamientos y reservas.</p>
+        </div>
+    </div>
+
+    <section class="card card--flush" aria-label="Anfitriones">
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Anfitrión</th>
+                        <th scope="col">Alta</th>
+                        <th scope="col" class="num">Alojamientos</th>
+                        <th scope="col" class="num">Reservas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for anfitrion in anfitriones %}
+                        <tr>
+                            <td data-label="Anfitrión" class="cell-guest">
+                                {{ ui.avatar(anfitrion.nombre, anfitrion.id) }}
+                                <span class="cell-guest__text">
+                                    <strong>{{ anfitrion.nombre }}</strong>
+                                    <a class="muted" href="mailto:{{ anfitrion.email }}">{{ anfitrion.email }}</a>
+                                </span>
+                            </td>
+                            <td data-label="Alta">{{ ui.fecha(anfitrion.fecha_creacion) }}</td>
+                            <td data-label="Alojamientos" class="num">{{ anfitrion.alojamientos }}</td>
+                            <td data-label="Reservas" class="num">{{ anfitrion.reservas }}</td>
+                        </tr>
+                    {% else %}
+                        <tr class="empty-row">
+                            <td colspan="4">
+                                <div class="empty-state">
+                                    <span class="empty-state__icon">{{ ui.icon('users') }}</span>
+                                    <p class="empty-state__title">Aún no hay anfitriones registrados</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

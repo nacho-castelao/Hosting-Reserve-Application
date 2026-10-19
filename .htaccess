@@ -11,8 +11,8 @@ Options -Indexes
     # .well-known porque los hostings lo usan para validar certificados SSL.
     RewriteRule (^|/)\.(?!well-known/) - [F,L]
 
-    # Código, plantillas, dependencias, SQL, tests y logs nunca son públicos.
-    RewriteRule ^(src|templates|vendor|database|tests|var)(/|$) - [F,L]
+    # Código, scripts de consola, plantillas, dependencias, SQL, tests y logs nunca son públicos.
+    RewriteRule ^(bin|src|templates|vendor|database|tests|var)(/|$) - [F,L]
     RewriteRule ^(composer\.(json|lock)|phpunit\.xml|README\.md)$ - [F,L]
 
     # Todo lo demás se sirve desde public/ (la URL no muestra /public).

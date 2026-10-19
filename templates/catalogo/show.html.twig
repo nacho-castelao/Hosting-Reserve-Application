@@ -1,0 +1,89 @@
+{% extends 'base.html.twig' %}
+{% import 'partials/_macros.html.twig' as ui %}
+
+{% block title %}{{ alojamiento.nombre }}{% endblock %}
+
+{% block content %}
+    <nav class="breadcrumb" aria-label="Ruta">
+        <a href="{{ url('/') }}" class="back-link">{{ ui.icon('arrow-left') }} Alojamientos</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{{ alojamiento.nombre }}</span>
+    </nav>
+
+    <div class="booking">
+        <header class="card booking__summary">
+            <span class="catalog__icon">{{ ui.icon('home') }}</span>
+            <p class="eyebrow">{{ alojamiento.ciudad }}</p>
+            <h1 class="booking__title">{{ alojamiento.nombre }}</h1>
+            <p class="catalog__price"><strong>{{ ui.money(alojamiento.precio_noche) }}</strong> <span class="muted">/ noche</span></p>
+            <p class="muted">La reserva queda <strong>pendiente</strong> hasta que el anfitrión la confirme. No se cobra nada por adelantado.</p>
+        </header>
+
+        <section class="card" aria-labelledby="reserva-titulo" id="reserva-card">
+            <h2 id="reserva-titulo" class="card__title">Reservar</h2>
+
+            {# Con JS el formulario va por la API (reserva-form.js); sin JS, POST clásico con PRG. #}
+            <form id="reserva-form" method="post" action="{{ url('/alojamientos/' ~ alojamiento.id ~ '/reservas') }}"
+                  data-alojamiento-id="{{ alojamiento.id }}" data-precio-noche="{{ alojamiento.precio_noche }}" data-max-noches="{{ max_noches }}">
+                <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+
+                <div class="alert alert--error" role="alert" data-form-alert{% if form_errors is empty and form_error is null %} hidden{% endif %}>
+                    {{ ui.icon('alert', 'alert__icon') }}<p data-form-alert-text>{{ form_error ?? 'Revisa los campos marcados.' }}</p>
+                </div>
+
+                <fieldset class="form-section">
+                    <legend class="form-section__title">{{ ui.icon('calendar') }} Estancia</legend>
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="fecha_entrada">Entrada</label>
+                            <input id="fecha_entrada" name="fecha_entrada" type="date" required min="{{ today }}"
+                                   value="{{ old.fecha_entrada ?? '' }}" aria-describedby="error-fecha_entrada"{% if form_errors.fecha_entrada is defined %} aria-invalid="true"{% endif %}>
+                            {{ ui.field_error('fecha_entrada', form_errors) }}
+                        </div>
+                        <div class="field">
+                            <label for="fecha_salida">Salida</label>
+                            <input id="fecha_salida" name="fecha_salida" type="date" required
+                                   value="{{ old.fecha_salida ?? '' }}" aria-describedby="error-fecha_salida"{% if form_errors.fecha_salida is defined %} aria-invalid="true"{% endif %}>
+                            {{ ui.field_error('fecha_salida', form_errors) }}
+                        </div>
+                        <p class="stay-summary full" id="estancia-resumen" aria-live="polite" hidden></p>
+                    </div>
+                </fieldset>
+
+                <fieldset class="form-section">
+                    <legend class="form-section__title">{{ ui.icon('user') }} Tus datos</legend>
+                    <div class="form-grid">
+                        <div class="field full">
+                            <label for="nombre_huesped">Nombre completo</label>
+                            <input id="nombre_huesped" name="nombre_huesped" type="text" required maxlength="{{ max_lengths.nombre_huesped }}"
+                                   autocomplete="name" placeholder="Ana García López" value="{{ old.nombre_huesped ?? '' }}"
+                                   aria-describedby="error-nombre_huesped"{% if form_errors.nombre_huesped is defined %} aria-invalid="true"{% endif %}>
+                            {{ ui.field_error('nombre_huesped', form_errors) }}
+                        </div>
+                        <div class="field full">
+                            <label for="email_huesped">Email</label>
+                            <input id="email_huesped" name="email_huesped" type="email" required maxlength="{{ max_lengths.email_huesped }}"
+                                   autocomplete="email" placeholder="ana@ejemplo.com" value="{{ old.email_huesped ?? '' }}"
+                                   aria-describedby="error-email_huesped"{% if form_errors.email_huesped is defined %} aria-invalid="true"{% endif %}>
+                            {{ ui.field_error('email_huesped', form_errors) }}
+                        </div>
+                        <div class="field full">
+                            <label for="notas">Notas para el anfitrión <span class="optional">opcional</span></label>
+                            <textarea id="notas" name="notas" rows="3" maxlength="{{ max_lengths.notas }}"
+                                      placeholder="Llegada tarde, cuna, mascotas…" aria-describedby="error-notas">{{ old.notas ?? '' }}</textarea>
+                            {{ ui.field_error('notas', form_errors) }}
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div class="booking__footer">
+                    <button type="submit" class="btn btn--primary">{{ ui.icon('check') }} Solicitar reserva</button>
+                </div>
+            </form>
+        </section>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script type="module" src="{{ asset('js/reserva-form.js') }}"></script>
+{% endblock %}

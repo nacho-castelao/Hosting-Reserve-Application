@@ -1,20 +1,24 @@
-// Alta de reservas en un panel lateral: validación en cliente (espejo de ReservaValidator)
-// y envío por la API. La validación del servidor sigue siendo la que manda.
+// Reserva del huésped en la ficha del alojamiento: validación en cliente (espejo de
+// ReservaValidator), total estimado en vivo y envío por la API. El importe real lo
+// calcula siempre el servidor; aquí solo se muestra como anticipo.
 
-import { api } from './api.js';
-import { formatDate, formatMoney, nights, nightsLabel, setBusy, showStatus } from './ui.js';
+import { api, BASE_URL } from './api.js';
+import { badge, el, formatDate, formatMoney, icon, nights, nightsLabel, setBusy, showStatus } from './ui.js';
 
 const form = document.getElementById('reserva-form');
-const drawer = document.getElementById('nueva-reserva');
-const panel = drawer.querySelector('.drawer__panel');
+const card = document.getElementById('reserva-card');
 const submitButton = form.querySelector('button[type="submit"]');
 const staySummary = document.getElementById('estancia-resumen');
+const formAlert = form.querySelector('[data-form-alert]');
 
-const FIELDS = ['nombre_huesped', 'email_huesped', 'nombre_alojamiento', 'fecha_entrada', 'fecha_salida', 'importe', 'notas'];
-const MAX_LENGTHS = { nombre_huesped: 150, email_huesped: 254, nombre_alojamiento: 200, notas: 1000 };
+const ALOJAMIENTO_ID = Number(form.dataset.alojamientoId);
+const PRECIO_NOCHE = form.dataset.precioNoche;
+const MAX_NOCHES = Number(form.dataset.maxNoches);
+
+const FIELDS = ['nombre_huesped', 'email_huesped', 'fecha_entrada', 'fecha_salida', 'notas'];
+const MAX_LENGTHS = { nombre_huesped: 150, email_huesped: 254, notas: 1000 };
 const REQUIRED = 'Este campo es obligatorio.';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const IMPORTE_RE = /^\d{1,8}(\.\d{1,2})?$/;
 const CONTROL_RE = /[\u0000-\u001F\u007F]/;
 
 // Con JS activo se usan nuestros mensajes en lugar de los nativos del navegador.
@@ -34,6 +38,13 @@ function todayIso() {
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
+/** Precio × noches en céntimos, como Importe::porNoches en el servidor (sin errores de coma flotante). */
+function totalEstimado(n) {
+    const [entero, decimales = ''] = PRECIO_NOCHE.split('.');
+    const centimos = Number(entero) * 100 + Number(decimales.padEnd(2, '0'));
+    return (centimos * n) / 100;
+}
+
 function readForm() {
     const data = {};
     FIELDS.forEach((name) => { data[name] = String(form.elements[name].value).trim(); });
@@ -43,7 +54,7 @@ function readForm() {
 function validate(data) {
     const errors = {};
 
-    ['nombre_huesped', 'email_huesped', 'nombre_alojamiento'].forEach((name) => {
+    ['nombre_huesped', 'email_huesped'].forEach((name) => {
         if (data[name] === '') errors[name] = REQUIRED;
         else if (CONTROL_RE.test(data[name])) errors[name] = 'Contiene caracteres no permitidos.';
         else if (data[name].length > MAX_LENGTHS[name]) errors[name] = `No puede superar los ${MAX_LENGTHS[name]} caracteres.`;
@@ -59,14 +70,12 @@ function validate(data) {
     if (!errors.fecha_entrada && data.fecha_entrada < todayIso()) {
         errors.fecha_entrada = 'La fecha de entrada no puede ser anterior a hoy.';
     }
-    if (!errors.fecha_entrada && !errors.fecha_salida && data.fecha_salida <= data.fecha_entrada) {
-        errors.fecha_salida = 'La fecha de salida debe ser posterior a la de entrada.';
-    }
-
-    if (data.importe === '') errors.importe = REQUIRED;
-    else if (Number(data.importe) < 0) errors.importe = 'El importe no puede ser negativo.';
-    else if (!IMPORTE_RE.test(data.importe)) {
-        errors.importe = 'Debe tener como máximo 2 decimales y un valor inferior a 100.000.000.';
+    if (!errors.fecha_entrada && !errors.fecha_salida) {
+        if (data.fecha_salida <= data.fecha_entrada) {
+            errors.fecha_salida = 'La fecha de salida debe ser posterior a la de entrada.';
+        } else if (nights(data.fecha_entrada, data.fecha_salida) > MAX_NOCHES) {
+            errors.fecha_salida = `La estancia no puede superar las ${MAX_NOCHES} noches.`;
+        }
     }
 
     if (data.notas.length > MAX_LENGTHS.notas) {
@@ -82,6 +91,12 @@ function clearErrors() {
         p.hidden = true;
     });
     form.querySelectorAll('[aria-invalid]').forEach((input) => input.removeAttribute('aria-invalid'));
+    formAlert.hidden = true;
+}
+
+function showAlert(message) {
+    formAlert.querySelector('[data-form-alert-text]').textContent = message;
+    formAlert.hidden = false;
 }
 
 /** Pinta cada error junto a su campo y lleva el foco al primero. */
@@ -96,75 +111,20 @@ function showErrors(errors) {
         input.setAttribute('aria-invalid', 'true');
         first ??= input;
     });
+    showAlert('Revisa los campos marcados.');
     first?.focus();
 }
 
-/* ---------- Panel lateral ---------- */
-
-// Sin JS el panel se abre con :target; con JS pasa a ser un diálogo modal. Se mueve al
-// final del <body> para poder dejar inerte el resto de la página mientras está abierto.
-document.body.append(drawer);
-drawer.classList.add('is-managed');
-panel.setAttribute('role', 'dialog');
-panel.setAttribute('aria-modal', 'true');
-const background = [...document.body.children].filter((node) => node.matches('header, main, footer'));
-let returnFocus = null;
-
-function openDrawer() {
-    returnFocus = document.activeElement;
-    drawer.classList.add('is-open');
-    document.body.classList.add('has-overlay');
-    background.forEach((node) => { node.inert = true; });
-    // Si vuelve con errores del servidor, el foco va al primer campo marcado.
-    const first = form.querySelector('[aria-invalid="true"]') ?? form.elements.nombre_huesped;
-    first.focus({ preventScroll: true });
-}
-
-function closeDrawer() {
-    drawer.classList.remove('is-open');
-    document.body.classList.remove('has-overlay');
-    background.forEach((node) => { node.inert = false; });
-    if (location.hash === '#nueva-reserva') {
-        history.replaceState(null, '', location.pathname + location.search);
-    }
-    returnFocus?.focus?.();
-}
-
-document.querySelectorAll('[data-drawer-open]').forEach((link) => {
-    link.addEventListener('click', (event) => {
-        event.preventDefault();
-        openDrawer();
-    });
-});
-drawer.querySelectorAll('[data-drawer-close]').forEach((link) => {
-    link.addEventListener('click', (event) => {
-        event.preventDefault();
-        closeDrawer();
-    });
-});
-drawer.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') closeDrawer();
-});
-
-// Abierto desde el servidor (errores de validación sin JS) o con #nueva-reserva en la URL.
-if (drawer.classList.contains('is-open') || location.hash === '#nueva-reserva') {
-    openDrawer();
-}
-
-/* ---------- Resumen de la estancia ---------- */
+/* ---------- Total estimado ---------- */
 
 function updateStaySummary() {
-    const { fecha_entrada: entrada, fecha_salida: salida, importe } = form.elements;
+    const { fecha_entrada: entrada, fecha_salida: salida } = form.elements;
     if (!isValidDate(entrada.value) || !isValidDate(salida.value) || salida.value <= entrada.value) {
         staySummary.hidden = true;
         return;
     }
     const n = nights(entrada.value, salida.value);
-    let text = `${nightsLabel(n)} · del ${formatDate(entrada.value)} al ${formatDate(salida.value)}`;
-    if (IMPORTE_RE.test(importe.value) && Number(importe.value) > 0) {
-        text += ` · ${formatMoney(Number(importe.value) / n)}/noche`;
-    }
-    staySummary.textContent = text;
+    staySummary.textContent = `${nightsLabel(n)} × ${formatMoney(PRECIO_NOCHE)} = ${formatMoney(totalEstimado(n))}`;
     staySummary.hidden = false;
 }
 
@@ -172,10 +132,60 @@ function updateStaySummary() {
 form.elements.fecha_entrada.addEventListener('change', (event) => {
     form.elements.fecha_salida.min = event.target.value;
 });
-['fecha_entrada', 'fecha_salida', 'importe'].forEach((name) => {
+['fecha_entrada', 'fecha_salida'].forEach((name) => {
     form.elements[name].addEventListener('input', updateStaySummary);
 });
 updateStaySummary();
+
+/* ---------- Confirmación ---------- */
+
+function detail(iconName, label, value, className = '') {
+    const item = el('div', { className: 'details__item' });
+    const iconBox = el('span', { className: 'details__icon' });
+    iconBox.append(icon(iconName));
+    const body = el('div');
+    body.append(el('dt', { text: label }), el('dd', { className, text: value }));
+    item.append(iconBox, body);
+    return item;
+}
+
+/** Misma estructura que templates/catalogo/recibida.html.twig. */
+function renderRecibida(reserva) {
+    const section = el('section', { className: 'card confirmation', attrs: { 'aria-labelledby': 'confirmacion-titulo' } });
+    const iconBox = el('span', { className: 'error-page__icon confirmation__icon' });
+    iconBox.append(icon('check-circle'));
+
+    const n = nights(reserva.fecha_entrada, reserva.fecha_salida);
+    const details = el('dl', { className: 'details confirmation__details' });
+    details.append(
+        detail('home', 'Alojamiento', reserva.nombre_alojamiento),
+        detail('calendar', 'Estancia', `${formatDate(reserva.fecha_entrada)} → ${formatDate(reserva.fecha_salida)} (${nightsLabel(n)})`),
+        detail('user', 'A nombre de', reserva.nombre_huesped),
+        detail('euro', 'Importe total', formatMoney(reserva.importe), 'details__amount'),
+    );
+
+    const ref = el('p', { className: 'confirmation__ref muted', text: `Referencia #${reserva.id} · Estado: ` });
+    ref.append(badge(reserva.estado));
+
+    const back = el('a', { className: 'btn btn--secondary', attrs: { href: `${BASE_URL}/` } });
+    back.append(icon('arrow-left'), ' Ver más alojamientos');
+    const backP = el('p');
+    backP.append(back);
+
+    const title = el('h1', { text: '¡Solicitud enviada!', attrs: { id: 'confirmacion-titulo', tabindex: '-1' } });
+    section.append(
+        iconBox,
+        title,
+        el('p', { className: 'muted', text: 'El anfitrión revisará tu reserva y la confirmará. Guarda este resumen.' }),
+        details,
+        ref,
+        backP,
+    );
+
+    // La ficha y el formulario dejan paso a la confirmación.
+    card.closest('.booking').replaceWith(section);
+    title.focus();
+}
 
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -185,28 +195,25 @@ form.addEventListener('submit', async (event) => {
     const errors = validate(data);
     if (Object.keys(errors).length > 0) {
         showErrors(errors);
-        showStatus('Revisa los campos marcados.', 'error');
         return;
     }
 
-    // Solo se envían los campos del formulario; las notas vacías no se mandan.
-    const payload = { ...data };
+    // Solo los campos del formulario más el alojamiento; las notas vacías no se mandan.
+    const payload = { alojamiento_id: ALOJAMIENTO_ID, ...data };
     if (payload.notas === '') delete payload.notas;
 
-    setBusy(submitButton, true, 'Guardando…');
+    setBusy(submitButton, true, 'Enviando…');
     form.setAttribute('aria-busy', 'true');
     try {
         const { data: reserva } = await api.createReserva(payload);
-        form.reset();
-        updateStaySummary();
-        closeDrawer();
-        showStatus(`Reserva #${reserva.id} creada para ${reserva.nombre_huesped}.`);
-        document.dispatchEvent(new CustomEvent('reserva:creada', { detail: reserva }));
+        renderRecibida(reserva);
+        showStatus(`Reserva #${reserva.id} enviada.`);
     } catch (error) {
         if (error.status === 422) showErrors(error.fields);
+        else showAlert(error.message); // 404, 409 (fechas ocupadas), 429, red…
         showStatus(error.message, 'error');
-    } finally {
         setBusy(submitButton, false);
+    } finally {
         form.setAttribute('aria-busy', 'false');
     }
 });

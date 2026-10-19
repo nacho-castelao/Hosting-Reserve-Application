@@ -24,6 +24,13 @@ final class Csrf
         return $_SESSION[self::SESSION_KEY];
     }
 
+    /** Nuevo token al cambiar de privilegios: uno capturado antes del login deja de servir. */
+    public static function rotate(): void
+    {
+        Session::start();
+        $_SESSION[self::SESSION_KEY] = bin2hex(random_bytes(32));
+    }
+
     /**
      * @throws HttpException 403 si el token falta o no coincide.
      */

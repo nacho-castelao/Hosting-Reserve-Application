@@ -8,12 +8,12 @@ use App\Repository\ReservaEventoRepositoryInterface;
 
 final class InMemoryReservaEventoRepository implements ReservaEventoRepositoryInterface
 {
-    /** @var list<array{reserva_id: int, tipo: string, descripcion: string}> */
+    /** @var list<array{reserva_id: int, tipo: string, descripcion: string, usuario_id: int|null}> */
     public array $eventos = [];
 
-    public function insert(int $reservaId, string $tipo, string $descripcion): void
+    public function insert(int $reservaId, string $tipo, string $descripcion, ?int $usuarioId): void
     {
-        $this->eventos[] = ['reserva_id' => $reservaId, 'tipo' => $tipo, 'descripcion' => $descripcion];
+        $this->eventos[] = ['reserva_id' => $reservaId, 'tipo' => $tipo, 'descripcion' => $descripcion, 'usuario_id' => $usuarioId];
     }
 
     public function findByReserva(int $reservaId): array

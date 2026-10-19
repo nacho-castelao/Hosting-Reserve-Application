@@ -2,17 +2,14 @@
 {% import 'partials/_macros.html.twig' as ui %}
 
 {% block title %}Reserva #{{ reserva.id }}{% endblock %}
+{% block nav %}reservas{% endblock %}
 
 {% block content %}
     <nav class="breadcrumb" aria-label="Ruta">
-        <a href="{{ url('/') }}" class="back-link">{{ ui.icon('arrow-left') }} Reservas</a>
+        <a href="{{ url('/panel') }}" class="back-link">{{ ui.icon('arrow-left') }} Reservas</a>
         <span aria-hidden="true">/</span>
         <span aria-current="page">#{{ reserva.id }}</span>
     </nav>
-
-    {% if creada %}
-        <div class="alert alert--success" role="status">{{ ui.icon('check-circle', 'alert__icon') }}<p>Reserva creada correctamente.</p></div>
-    {% endif %}
 
     <article id="reserva-detalle" data-id="{{ reserva.id }}">
         <header class="detail-hero card">
@@ -91,6 +88,7 @@
                             <div>
                                 <p class="timeline__text">{{ evento.descripcion }}</p>
                                 <time datetime="{{ evento.fecha_creacion|date('Y-m-d\\TH:i:s') }}">{{ ui.fecha(evento.fecha_creacion) }} · {{ evento.fecha_creacion|date('H:i') }}</time>
+                                <span class="timeline__actor">{{ evento.usuario ?? 'Huésped (web pública)' }}</span>
                             </div>
                         </li>
                     {% else %}

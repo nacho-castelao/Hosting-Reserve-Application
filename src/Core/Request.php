@@ -19,6 +19,7 @@ final class Request
      * @param array<string, string> $headers Nombres en minúsculas.
      * @param string $basePath Prefijo público de la aplicación ('' si está en la raíz).
      * @param array<string, mixed> $form Campos de formulario ($_POST).
+     * @param string $clientIp IP del cliente (REMOTE_ADDR). Para el rate limiting.
      */
     public function __construct(
         public readonly string $method,
@@ -28,6 +29,7 @@ final class Request
         public readonly string $basePath = '',
         ?string $body = null,
         private readonly array $form = [],
+        public readonly string $clientIp = '',
     ) {
         $this->body = $body;
     }
@@ -67,6 +69,8 @@ final class Request
             $basePath,
             null,
             $_POST,
+            // Solo REMOTE_ADDR: X-Forwarded-For lo puede falsear cualquiera si no hay un proxy de confianza delante.
+            (string) ($_SERVER['REMOTE_ADDR'] ?? ''),
         );
     }
 

@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+{% import 'partials/_macros.html.twig' as ui %}
+
+{% block title %}Reserva recibida{% endblock %}
+
+{% block content %}
+    {# Misma estructura que construye reserva-form.js (renderRecibida) tras reservar por la API. #}
+    <section class="card confirmation" aria-labelledby="confirmacion-titulo">
+        <span class="error-page__icon confirmation__icon">{{ ui.icon('check-circle') }}</span>
+        <h1 id="confirmacion-titulo">¡Solicitud enviada!</h1>
+        <p class="muted">El anfitrión revisará tu reserva y la confirmará. Guarda este resumen.</p>
+        <dl class="details confirmation__details">
+            <div class="details__item">
+                <span class="details__icon">{{ ui.icon('home') }}</span>
+                <div><dt>Alojamiento</dt><dd>{{ reserva.nombre_alojamiento }}</dd></div>
+            </div>
+            <div class="details__item">
+                <span class="details__icon">{{ ui.icon('calendar') }}</span>
+                <div><dt>Estancia</dt><dd>{{ ui.fecha(reserva.fecha_entrada) }} → {{ ui.fecha(reserva.fecha_salida) }} ({{ ui.noches(reserva.fecha_entrada, reserva.fecha_salida) }})</dd></div>
+            </div>
+            <div class="details__item">
+                <span class="details__icon">{{ ui.icon('user') }}</span>
+                <div><dt>A nombre de</dt><dd>{{ reserva.nombre_huesped }}</dd></div>
+            </div>
+            <div class="details__item">
+                <span class="details__icon">{{ ui.icon('euro') }}</span>
+                <div><dt>Importe total</dt><dd class="details__amount">{{ ui.money(reserva.importe) }}</dd></div>
+            </div>
+        </dl>
+        <p class="confirmation__ref muted">Referencia #{{ reserva.id }} · Estado: {{ ui.badge(reserva.estado) }}</p>
+        <p><a class="btn btn--secondary" href="{{ url('/') }}">{{ ui.icon('arrow-left') }} Ver más alojamientos</a></p>
+    </section>
+{% endblock %}

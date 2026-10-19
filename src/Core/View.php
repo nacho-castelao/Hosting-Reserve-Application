@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Core;
 
+use App\Domain\UsuarioActual;
+use Closure;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 use Twig\TwigFunction;
@@ -12,7 +14,11 @@ final class View
 {
     private Environment $twig;
 
-    public function __construct(string $templatesDir, ?string $cacheDir, bool $debug, string $basePath)
+    /**
+     * @param Closure(): ?UsuarioActual $usuario Usuario de la petición (perezoso: solo se
+     *        consulta si la plantilla lo necesita).
+     */
+    public function __construct(string $templatesDir, ?string $cacheDir, bool $debug, string $basePath, Closure $usuario)
     {
         $this->twig = new Environment(new FilesystemLoader($templatesDir), [
             'cache' => $debug || $cacheDir === null ? false : $cacheDir,
@@ -29,6 +35,10 @@ final class View
         ));
         // Perezoso: solo se abre sesión cuando una plantilla necesita el token.
         $this->twig->addFunction(new TwigFunction('csrf_token', static fn (): string => Csrf::token()));
+        $this->twig->addFunction(new TwigFunction(
+            'usuario_actual',
+            static fn (): ?array => $usuario()?->toArray(),
+        ));
     }
 
     /** @param array<string, mixed> $context */

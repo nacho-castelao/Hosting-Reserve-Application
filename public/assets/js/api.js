@@ -43,6 +43,11 @@ async function request(path, { method = 'GET', body, signal } = {}) {
         // Cuerpo vacío o no JSON (p. ej. un error del servidor web): se trata abajo.
     }
 
+    // Sesión caducada o cerrada en otra pestaña: al login, volviendo después a esta página.
+    if (response.status === 401) {
+        window.location.assign(`${BASE_URL}/login?next=${encodeURIComponent(window.location.pathname.slice(BASE_URL.length))}`);
+    }
+
     if (!response.ok) {
         throw new ApiError(payload?.error?.message ?? `Error inesperado (${response.status}).`, {
             status: response.status,
@@ -54,6 +59,7 @@ async function request(path, { method = 'GET', body, signal } = {}) {
 }
 
 export const api = {
+    listAlojamientos: () => request('/api/alojamientos'),
     listReservas: (params, signal) => request(`/api/reservas?${params.toString()}`, { signal }),
     getResumen: () => request('/api/reservas/resumen'),
     getReserva: (id) => request(`/api/reservas/${encodeURIComponent(id)}`),

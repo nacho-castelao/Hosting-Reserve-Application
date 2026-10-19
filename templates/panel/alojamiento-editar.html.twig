@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+{% import 'partials/_macros.html.twig' as ui %}
+
+{% block title %}Editar {{ alojamiento.nombre }}{% endblock %}
+{% block nav %}alojamientos{% endblock %}
+
+{% block content %}
+    <nav class="breadcrumb" aria-label="Ruta">
+        <a href="{{ url('/panel/alojamientos') }}" class="back-link">{{ ui.icon('arrow-left') }} Alojamientos</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{{ alojamiento.nombre }}</span>
+    </nav>
+
+    <section class="card form-card" aria-labelledby="editar-titulo">
+        <h1 id="editar-titulo" class="card__title">Editar alojamiento</h1>
+        {% if form_errors is not empty %}
+            <div class="alert alert--error" role="alert">{{ ui.icon('alert', 'alert__icon') }}<p>Revisa los campos marcados.</p></div>
+        {% endif %}
+        <form method="post" action="{{ url('/panel/alojamientos/' ~ alojamiento.id) }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            {% include 'partials/_alojamiento_fields.html.twig' with { old: old, form_errors: form_errors, max_lengths: max_lengths } only %}
+            <p class="hint">Las reservas ya hechas conservan el importe con el que se reservaron.</p>
+            <div class="form-actions">
+                <a class="btn btn--secondary" href="{{ url('/panel/alojamientos') }}">Cancelar</a>
+                <button type="submit" class="btn btn--primary">{{ ui.icon('check') }} Guardar cambios</button>
+            </div>
+        </form>
+    </section>
+{% endblock %}

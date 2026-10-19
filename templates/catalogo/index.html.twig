@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+{% import 'partials/_macros.html.twig' as ui %}
+
+{% block title %}Alojamientos{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <div>
+            <p class="eyebrow">Reserva directa</p>
+            <h1>Encuentra tu alojamiento</h1>
+            <p class="page-header__lead">Elige un alojamiento y tus fechas. El precio se calcula por noche, sin sorpresas.</p>
+        </div>
+    </div>
+
+    {% if alojamientos is empty %}
+        <section class="card">
+            <div class="empty-state">
+                <span class="empty-state__icon">{{ ui.icon('inbox') }}</span>
+                <p class="empty-state__title">Ahora mismo no hay alojamientos disponibles</p>
+                <p class="muted">Vuelve a consultarlo más adelante.</p>
+            </div>
+        </section>
+    {% else %}
+        <ul class="catalog" role="list">
+            {% for alojamiento in alojamientos %}
+                <li class="card catalog__item">
+                    <span class="catalog__icon">{{ ui.icon('home') }}</span>
+                    <h2 class="catalog__title">
+                        <a class="catalog__link" href="{{ url('/alojamientos/' ~ alojamiento.id) }}">{{ alojamiento.nombre }}</a>
+                    </h2>
+                    <p class="catalog__city muted">{{ ui.icon('map-pin') }} {{ alojamiento.ciudad }}</p>
+                    <p class="catalog__price"><strong>{{ ui.money(alojamiento.precio_noche) }}</strong> <span class="muted">/ noche</span></p>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

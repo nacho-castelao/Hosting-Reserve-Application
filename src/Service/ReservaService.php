@@ -6,25 +6,36 @@ namespace App\Service;
 
 use App\Domain\EstadoReserva;
 use App\Domain\FiltroReservas;
+use App\Domain\Importe;
+use App\Domain\UsuarioActual;
 use App\Exception\ConflictException;
 use App\Exception\NotFoundException;
+use App\Exception\ValidationException;
+use App\Repository\AlojamientoRepositoryInterface;
 use App\Repository\ReservaEventoRepositoryInterface;
 use App\Repository\ReservaRepositoryInterface;
 use App\Repository\TransactionManager;
 use App\Validation\ReservaValidator;
+use InvalidArgumentException;
 
 /**
  * Reglas de negocio de las reservas. Sin SQL: delega en los repositorios y
  * garantiza que cada cambio y su evento de historial van en la misma transacción.
+ *
+ * Autorización: un anfitrión solo ve y gestiona las reservas de sus alojamientos;
+ * las de otros responden 404 (no 403), para no revelar qué ids existen.
  */
 final class ReservaService
 {
     public const EVENTO_CREACION = 'creacion';
     public const EVENTO_CAMBIO_ESTADO = 'cambio_estado';
 
+    private const NO_EXISTE = 'La reserva solicitada no existe.';
+
     public function __construct(
         private readonly ReservaRepositoryInterface $reservas,
         private readonly ReservaEventoRepositoryInterface $eventos,
+        private readonly AlojamientoRepositoryInterface $alojamientos,
         private readonly TransactionManager $transactions,
         private readonly ReservaValidator $validator,
     ) {
@@ -41,8 +52,10 @@ final class ReservaService
     /**
      * @return array{items: list<array<string, mixed>>, total: int}
      */
-    public function listar(FiltroReservas $filtro): array
+    public function listar(FiltroReservas $filtro, UsuarioActual $usuario): array
     {
+        $filtro = $filtro->conAnfitrion($usuario->ambitoAnfitrion());
+
         return [
             'items' => $this->reservas->search($filtro),
             'total' => $this->reservas->count($filtro),
@@ -50,26 +63,26 @@ final class ReservaService
     }
 
     /**
-     * Resumen global para el panel: reservas por estado y facturación prevista
-     * (suma de importes de las reservas no canceladas).
+     * Resumen para el panel: reservas por estado y facturación prevista (suma de
+     * importes de las reservas no canceladas), acotado al ámbito del usuario.
      *
      * @return array{total: int, pendiente: int, confirmada: int, cancelada: int, ingresos: string}
      */
-    public function resumen(): array
+    public function resumen(UsuarioActual $usuario): array
     {
-        $porEstado = $this->reservas->totalesPorEstado();
+        $porEstado = $this->reservas->totalesPorEstado($usuario->ambitoAnfitrion());
 
         $resumen = ['total' => 0];
-        $ingresos = 0.0;
+        $ingresos = 0;
         foreach (EstadoReserva::cases() as $estado) {
-            $fila = $porEstado[$estado->value] ?? ['total' => 0, 'importe' => '0'];
+            $fila = $porEstado[$estado->value] ?? ['total' => 0, 'importe' => '0.00'];
             $resumen[$estado->value] = $fila['total'];
             $resumen['total'] += $fila['total'];
             if ($estado !== EstadoReserva::Cancelada) {
-                $ingresos += (float) $fila['importe'];
+                $ingresos += Importe::aCentimos($fila['importe']);
             }
         }
-        $resumen['ingresos'] = number_format($ingresos, 2, '.', '');
+        $resumen['ingresos'] = Importe::desdeCentimos($ingresos);
 
         return $resumen;
     }
@@ -80,11 +93,11 @@ final class ReservaService
      * @return array<string, mixed>
      * @throws NotFoundException
      */
-    public function obtener(int $id): array
+    public function obtener(int $id, UsuarioActual $usuario): array
     {
         $reserva = $this->reservas->findById($id);
-        if ($reserva === null) {
-            throw new NotFoundException('La reserva solicitada no existe.');
+        if ($reserva === null || !self::puedeVer($reserva, $usuario)) {
+            throw new NotFoundException(self::NO_EXISTE);
         }
         $reserva['eventos'] = $this->eventos->findByReserva($id);
 
@@ -92,25 +105,50 @@ final class ReservaService
     }
 
     /**
+     * Alta pública (huésped sin cuenta). El importe lo calcula el servidor:
+     * noches × precio por noche del alojamiento en ese momento.
+     *
      * @param array<string, mixed> $input Cuerpo JSON sin validar.
-     * @return array<string, mixed> La reserva creada (con su historial).
+     * @return array<string, mixed> Resumen de la reserva creada, apto para el huésped.
+     * @throws ValidationException|NotFoundException|ConflictException
      */
     public function crear(array $input): array
     {
         $nueva = $this->validator->validateCreate($input);
 
         $id = $this->transactions->transactional(function () use ($nueva): int {
-            $id = $this->reservas->insert($nueva);
+            // Bloquear el alojamiento serializa las altas de ese alojamiento: dos huéspedes
+            // no pueden pasar a la vez la comprobación de solapamiento con las mismas fechas.
+            $alojamiento = $this->alojamientos->findByIdForUpdate($nueva->alojamientoId);
+            if ($alojamiento === null || !$alojamiento['activo']) {
+                throw new NotFoundException('El alojamiento no existe o no admite reservas.');
+            }
+
+            if ($this->reservas->haySolapamiento($nueva->alojamientoId, $nueva->fechaEntrada, $nueva->fechaSalida)) {
+                throw new ConflictException('El alojamiento ya está reservado en alguna de esas noches. Prueba con otras fechas.');
+            }
+
+            try {
+                $importe = Importe::porNoches($alojamiento['precio_noche'], $nueva->noches());
+            } catch (InvalidArgumentException) {
+                throw new ValidationException(['fecha_salida' => 'La estancia es demasiado larga.']);
+            }
+
+            $id = $this->reservas->insert($nueva, $importe);
             $this->eventos->insert(
                 $id,
                 self::EVENTO_CREACION,
                 'Reserva creada con estado ' . EstadoReserva::Pendiente->value . '.',
+                null,
             );
 
             return $id;
         });
 
-        return $this->obtener($id);
+        /** @var array<string, mixed> $reserva */
+        $reserva = $this->reservas->findById($id);
+
+        return self::paraHuesped($reserva);
     }
 
     /**
@@ -118,16 +156,16 @@ final class ReservaService
      * @return array<string, mixed> La reserva actualizada (con su historial).
      * @throws NotFoundException|ConflictException
      */
-    public function cambiarEstado(int $id, array $input): array
+    public function cambiarEstado(int $id, array $input, UsuarioActual $usuario): array
     {
         $nuevo = $this->validator->validateEstado($input);
 
-        $this->transactions->transactional(function () use ($id, $nuevo): void {
+        $this->transactions->transactional(function () use ($id, $nuevo, $usuario): void {
             // La fila queda bloqueada hasta el commit: dos peticiones simultáneas no
             // pueden validar la transición sobre el mismo estado de partida.
             $reserva = $this->reservas->findByIdForUpdate($id);
-            if ($reserva === null) {
-                throw new NotFoundException('La reserva solicitada no existe.');
+            if ($reserva === null || !self::puedeVer($reserva, $usuario)) {
+                throw new NotFoundException(self::NO_EXISTE);
             }
 
             $actual = EstadoReserva::from($reserva['estado']);
@@ -143,9 +181,31 @@ final class ReservaService
                 $id,
                 self::EVENTO_CAMBIO_ESTADO,
                 "Estado cambiado de {$actual->value} a {$nuevo->value}.",
+                $usuario->id,
             );
         });
 
-        return $this->obtener($id);
+        return $this->obtener($id, $usuario);
+    }
+
+    /** @param array<string, mixed> $reserva */
+    private static function puedeVer(array $reserva, UsuarioActual $usuario): bool
+    {
+        return $usuario->esAdmin() || $reserva['anfitrion_id'] === $usuario->id;
+    }
+
+    /**
+     * Lo que se le devuelve al huésped: sus propios datos y el importe calculado,
+     * sin ids internos del anfitrión ni historial.
+     *
+     * @param array<string, mixed> $reserva
+     * @return array<string, mixed>
+     */
+    private static function paraHuesped(array $reserva): array
+    {
+        return array_intersect_key($reserva, array_flip([
+            'id', 'alojamiento_id', 'nombre_alojamiento', 'nombre_huesped', 'email_huesped',
+            'fecha_entrada', 'fecha_salida', 'estado', 'importe', 'notas',
+        ]));
     }
 }

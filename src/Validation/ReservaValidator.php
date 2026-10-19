@@ -16,25 +16,28 @@ use DateTimeImmutable;
  */
 final class ReservaValidator
 {
+    use FieldRules;
+
     /** Longitudes máximas: coinciden con las columnas VARCHAR de database/schema.sql. */
     public const MAX_LENGTHS = [
         'nombre_huesped' => 150,
         'email_huesped' => 254,
-        'nombre_alojamiento' => 200,
         'notas' => 1000,
     ];
 
     public const MAX_Q_LENGTH = 100;
 
+    public const MAX_NOCHES = 90;
+
     private const CREATE_FIELDS = [
-        'nombre_huesped', 'email_huesped', 'nombre_alojamiento',
-        'fecha_entrada', 'fecha_salida', 'importe', 'notas',
+        'alojamiento_id', 'nombre_huesped', 'email_huesped', 'fecha_entrada', 'fecha_salida', 'notas',
     ];
 
-    /** Campos que existen en la tabla pero que solo decide el servidor. */
-    private const SERVER_FIELDS = ['id', 'estado', 'fecha_creacion'];
-
-    private const REQUIRED = 'Este campo es obligatorio.';
+    /**
+     * Campos que existen en la tabla pero que solo decide el servidor. El importe
+     * se calcula a partir del precio por noche del alojamiento.
+     */
+    private const SERVER_FIELDS = ['id', 'estado', 'importe', 'fecha_creacion'];
 
     private readonly DateTimeImmutable $today;
 
@@ -50,16 +53,11 @@ final class ReservaValidator
      */
     public function validateCreate(array $input): NuevaReserva
     {
-        $errors = $this->rejectUnexpectedFields($input, self::CREATE_FIELDS);
+        $errors = $this->rejectUnexpectedFields($input, self::CREATE_FIELDS, self::SERVER_FIELDS);
 
-        $nombre = $this->requiredText($input, 'nombre_huesped', $errors);
-        $alojamiento = $this->requiredText($input, 'nombre_alojamiento', $errors);
-
-        $email = $this->requiredText($input, 'email_huesped', $errors);
-        if ($email !== null && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-            $errors['email_huesped'] = 'Introduce un email válido.';
-            $email = null;
-        }
+        $alojamiento = $this->requiredId($input, 'alojamiento_id', $errors);
+        $nombre = $this->requiredText($input, 'nombre_huesped', self::MAX_LENGTHS['nombre_huesped'], $errors);
+        $email = $this->requiredEmail($input, 'email_huesped', self::MAX_LENGTHS['email_huesped'], $errors);
 
         $entrada = $this->requiredDate($input, 'fecha_entrada', $errors);
         if ($entrada !== null && $entrada < $this->today) {
@@ -67,11 +65,15 @@ final class ReservaValidator
         }
 
         $salida = $this->requiredDate($input, 'fecha_salida', $errors);
-        if ($entrada !== null && $salida !== null && $salida <= $entrada) {
-            $errors['fecha_salida'] = 'La fecha de salida debe ser posterior a la de entrada.';
+        if ($entrada !== null && $salida !== null) {
+            if ($salida <= $entrada) {
+                $errors['fecha_salida'] = 'La fecha de salida debe ser posterior a la de entrada.';
+            } elseif ($entrada->diff($salida)->days > self::MAX_NOCHES) {
+                // Una reserva pública muy larga bloquearía el alojamiento durante meses.
+                $errors['fecha_salida'] = 'La estancia no puede superar las ' . self::MAX_NOCHES . ' noches.';
+            }
         }
 
-        $importe = $this->importe($input, $errors);
         $notas = $this->optionalNotes($input, $errors);
 
         if ($errors !== []) {
@@ -79,7 +81,7 @@ final class ReservaValidator
         }
 
         // Sin errores, todos los obligatorios tienen valor.
-        return new NuevaReserva($nombre, $email, $alojamiento, $entrada, $salida, $importe, $notas);
+        return new NuevaReserva($alojamiento, $nombre, $email, $entrada, $salida, $notas);
     }
 
     /**
@@ -97,7 +99,7 @@ final class ReservaValidator
 
         $value = $input['estado'] ?? null;
         if ($value === null || $value === '') {
-            $errors['estado'] = self::REQUIRED;
+            $errors['estado'] = self::$required;
         } elseif (!is_string($value) || ($estado = EstadoReserva::tryFrom($value)) === null) {
             $errors['estado'] = 'Estado no válido. Valores admitidos: ' . implode(', ', EstadoReserva::values()) . '.';
         }
@@ -192,77 +194,13 @@ final class ReservaValidator
 
     /**
      * @param array<string, mixed> $input
-     * @param list<string> $allowed
-     * @return array<string, string>
-     */
-    private function rejectUnexpectedFields(array $input, array $allowed): array
-    {
-        $errors = [];
-        foreach (array_keys($input) as $field) {
-            $field = (string) $field;
-            if (in_array($field, $allowed, true)) {
-                continue;
-            }
-            $errors[mb_substr($field, 0, 50)] = in_array($field, self::SERVER_FIELDS, true)
-                ? 'Este campo lo asigna el servidor y no se puede enviar.'
-                : 'Campo no permitido.';
-        }
-
-        return $errors;
-    }
-
-    /**
-     * Texto obligatorio de una línea: string, recortado, no vacío, sin
-     * caracteres de control y dentro de la longitud máxima.
-     *
-     * @param array<string, mixed> $input
-     * @param array<string, string> $errors
-     */
-    private function requiredText(array $input, string $field, array &$errors): ?string
-    {
-        $value = $input[$field] ?? null;
-        if ($value === null) {
-            $errors[$field] = self::REQUIRED;
-
-            return null;
-        }
-        if (!is_string($value)) {
-            $errors[$field] = 'Debe ser un texto.';
-
-            return null;
-        }
-
-        $value = trim($value);
-        if ($value === '') {
-            $errors[$field] = self::REQUIRED;
-
-            return null;
-        }
-        if (preg_match('/[\x00-\x1F\x7F]/', $value) === 1) {
-            $errors[$field] = 'Contiene caracteres no permitidos.';
-
-            return null;
-        }
-
-        $max = self::MAX_LENGTHS[$field];
-        if (mb_strlen($value) > $max) {
-            $errors[$field] = "No puede superar los {$max} caracteres.";
-
-            return null;
-        }
-
-        return $value;
-    }
-
-    /**
-     * @param array<string, mixed> $input
      * @param array<string, string> $errors
      */
     private function requiredDate(array $input, string $field, array &$errors): ?DateTimeImmutable
     {
         $value = $input[$field] ?? null;
         if ($value === null || $value === '') {
-            $errors[$field] = self::REQUIRED;
+            $errors[$field] = self::$required;
 
             return null;
         }
@@ -273,50 +211,6 @@ final class ReservaValidator
         }
 
         return $date;
-    }
-
-    /**
-     * Importe >= 0 con como máximo 2 decimales y 8 cifras enteras (DECIMAL(10,2)).
-     * Admite número JSON o cadena numérica y lo normaliza a "1234.50".
-     *
-     * @param array<string, mixed> $input
-     * @param array<string, string> $errors
-     */
-    private function importe(array $input, array &$errors): ?string
-    {
-        $value = $input['importe'] ?? null;
-        if ($value === null || $value === '') {
-            $errors['importe'] = self::REQUIRED;
-
-            return null;
-        }
-        // is_bool primero: en PHP true no es numérico, pero así el mensaje es claro.
-        if (is_bool($value) || !(is_int($value) || is_float($value) || is_string($value))) {
-            $errors['importe'] = 'Debe ser un número.';
-
-            return null;
-        }
-
-        $text = is_string($value) ? trim($value) : (string) $value;
-        if (!is_numeric($text)) {
-            $errors['importe'] = 'Debe ser un número.';
-
-            return null;
-        }
-        if ((float) $text < 0) {
-            $errors['importe'] = 'El importe no puede ser negativo.';
-
-            return null;
-        }
-        if (preg_match('/^\d{1,8}(\.\d{1,2})?$/', $text) !== 1) {
-            $errors['importe'] = 'Debe tener como máximo 2 decimales y un valor inferior a 100.000.000.';
-
-            return null;
-        }
-
-        [$integer, $decimals] = array_pad(explode('.', $text, 2), 2, '');
-
-        return (ltrim($integer, '0') ?: '0') . '.' . str_pad($decimals, 2, '0');
     }
 
     /**
