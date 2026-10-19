@@ -15,7 +15,7 @@ Aplicación web para gestionar reservas de alojamientos: listado con filtros com
 5. [Medidas de seguridad](#5-medidas-de-seguridad)
 6. [Uso de `|raw`](#6-uso-de-raw)
 7. [Tests](#7-tests)
-8. [Despliegue en hosting compartido](#8-despliegue-en-hosting-compartido)
+8. [Despliegue](#8-despliegue)
 9. [Qué haría diferente con más tiempo](#9-qué-haría-diferente-con-más-tiempo)
 10. [Escalabilidad: 1000 reservas/hora](#10-escalabilidad-1000-reservashora)
 
@@ -46,7 +46,7 @@ Abre <http://localhost:8000>.
 
 **Con phpMyAdmin (MAMP/WAMP/XAMPP):** crea la base de datos `reservas` con cotejamiento `utf8mb4_unicode_ci`, selecciónala, entra en *Importar*, elige `database/schema.sql` y ejecuta. El script es idempotente (`DROP TABLE IF EXISTS`), así que se puede reimportar para volver a los datos iniciales.
 
-**Con MAMP/Apache:** apunta el *DocumentRoot* a la carpeta `public/`. Si no puedes, el `.htaccess` de la raíz reescribe a `public/` y bloquea el resto (ver [despliegue](#8-despliegue-en-hosting-compartido)).
+**Con MAMP/Apache:** apunta el *DocumentRoot* a la carpeta `public/`. Si no puedes, el `.htaccess` de la raíz reescribe a `public/` y bloquea el resto (ver [despliegue](#82-hosting-compartido)).
 
 ### Variables de `.env`
 
@@ -266,7 +266,27 @@ Además, durante el desarrollo se probaron manualmente con curl todos los códig
 
 ---
 
-## 8. Despliegue en hosting compartido
+## 8. Despliegue
+
+Hay dos formas de desplegar la aplicación. La demo pública usa la primera.
+
+### 8.1 VPS con Ubuntu 24.04 (la demo)
+
+Servidor IONOS VPS Linux S+ (1 vCore, 2 GB RAM, 60 GB NVMe), Ubuntu 24.04.5 LTS, datacenter en la UE. Acceso root por SSH con clave, sin contraseña.
+
+**Pila:** Nginx con el DocumentRoot en `public/`, PHP 8.3-FPM, MariaDB 10.11, certificado HTTPS de Let's Encrypt renovado automáticamente con certbot. Cortafuegos UFW (solo SSH, HTTP y HTTPS), actualizaciones de seguridad automáticas y 1 GB de swap.
+
+**Pasos resumidos:**
+
+1. Crear la base de datos `reservas` (utf8mb4) y un usuario con privilegios solo sobre ella. Importar `database/schema.sql`.
+2. Clonar el repositorio en `/var/www/reservas` y ejecutar `composer install --no-dev --optimize-autoloader`.
+3. Crear `.env` a partir de `.env.example` con `APP_ENV=production`, `APP_DEBUG=false` y las credenciales de la base de datos. Dar permisos `640` al `.env`.
+4. Dar escritura a `www-data` sobre `var/` y apuntar el `root` de Nginx a `public/`. Denegar el acceso a ficheros ocultos.
+5. Obtener el certificado con `certbot --nginx` y redirigir HTTP a HTTPS.
+
+Para actualizar: `git pull --ff-only` dentro de la carpeta y, si cambian las dependencias, `composer install --no-dev --optimize-autoloader`.
+
+### 8.2 Hosting compartido
 
 Pensado para hostings gratuitos con PHP + MySQL (InfinityFree, AwardSpace…), donde normalmente **no hay Composer ni SSH** y **no se puede cambiar el DocumentRoot**.
 
