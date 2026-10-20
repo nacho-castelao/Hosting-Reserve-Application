@@ -1,0 +1,32 @@
+{% import 'partials/_macros.html.twig' as ui %}
+{# Booking Card del diseño. Misma estructura que construye reservas-list.js (renderCard). #}
+<li class="booking-card" data-id="{{ reserva.id }}">
+    <div class="booking-card__head">
+        <h3 class="booking-card__guest">
+            <a class="booking-card__link" href="{{ url('/panel/reservas/' ~ reserva.id) }}">{{ reserva.nombre_huesped }}</a>
+        </h3>
+        <span data-cell="estado">{{ ui.badge(reserva.estado) }}</span>
+    </div>
+    <p class="booking-card__line">{{ ui.icon('bed') }}<span>{{ reserva.nombre_alojamiento }}</span></p>
+    <p class="booking-card__line">
+        {{ ui.icon('calendar') }}
+        <span>{{ ui.rango(reserva.fecha_entrada, reserva.fecha_salida) }} · {{ ui.noches(reserva.fecha_entrada, reserva.fecha_salida) }}</span>
+    </p>
+    <div class="booking-card__foot">
+        <span class="booking-card__total-label">Total</span>
+        {# Ocultos sin JS: los cambios de estado necesitan la API (PATCH). #}
+        <span class="actions__group" data-cell="acciones">
+            {% if reserva.estado == 'pendiente' %}
+                <button type="button" class="btn btn--success-soft btn--icon js-estado" data-id="{{ reserva.id }}" data-estado="confirmada" title="Confirmar" hidden>
+                    {{ ui.icon('check') }}<span class="visually-hidden">Confirmar reserva #{{ reserva.id }}</span>
+                </button>
+            {% endif %}
+            {% if reserva.estado != 'cancelada' %}
+                <button type="button" class="btn btn--danger-soft btn--icon js-estado" data-id="{{ reserva.id }}" data-estado="cancelada" title="Cancelar" hidden>
+                    {{ ui.icon('x') }}<span class="visually-hidden">Cancelar reserva #{{ reserva.id }}</span>
+                </button>
+            {% endif %}
+        </span>
+        <span class="booking-card__amount">{{ ui.money(reserva.importe) }}</span>
+    </div>
+</li>

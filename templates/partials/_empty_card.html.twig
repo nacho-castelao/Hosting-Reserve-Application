@@ -1,0 +1,10 @@
+{% import 'partials/_macros.html.twig' as ui %}
+{# Empty State del diseño. Misma estructura que construye reservas-list.js (renderEmpty). #}
+<li class="booking-empty">
+    <div class="empty-state">
+        <span class="empty-state__icon">{{ ui.icon('logo') }}</span>
+        <p class="empty-state__title">No hay reservas que coincidan</p>
+        <p class="muted">Prueba con otro nombre, estado o rango de fechas.</p>
+        <a class="btn btn--secondary js-clear-filters" href="{{ url('/panel') }}">Limpiar filtros</a>
+    </div>
+</li>

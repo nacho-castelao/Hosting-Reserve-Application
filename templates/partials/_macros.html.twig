@@ -18,6 +18,16 @@
     {{ iso|date('j') }} {{ meses[iso|date('n') - 1] }} {{ iso|date('Y') }}
 {%- endmacro %}
 
+{# '12 oct – 15 oct 2026'; con años distintos, ambos completos (igual que formatRange en ui.js). #}
+{% macro rango(entrada, salida) -%}
+    {%- set meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'] -%}
+    {%- if entrada|date('Y') == salida|date('Y') -%}
+        {{ entrada|date('j') }} {{ meses[entrada|date('n') - 1] }} – {{ _self.fecha(salida) }}
+    {%- else -%}
+        {{ _self.fecha(entrada) }} – {{ _self.fecha(salida) }}
+    {%- endif -%}
+{%- endmacro %}
+
 {# Noches de la estancia: la salida no cuenta como noche. #}
 {% macro noches(entrada, salida) -%}
     {%- set n = date(salida).diff(date(entrada)).days -%}

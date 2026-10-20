@@ -1,12 +1,12 @@
-// Listado: filtrado en vivo vía API, URL sincronizada, resumen y cambios de estado por fila.
+// Listado: filtrado en vivo vía API, URL sincronizada, resumen y cambios de estado por tarjeta.
 
 import { api, BASE_URL } from './api.js';
 import {
-    avatar, badge, changeEstado, el, estadoButtons, formatDate, formatMoney, icon, nights, nightsLabel, showStatus,
+    badge, changeEstado, el, estadoButtons, formatMoney, formatRange, icon, nights, nightsLabel, showStatus,
 } from './ui.js';
 
 const form = document.getElementById('filtros');
-const tbody = document.getElementById('reservas-body');
+const list = document.getElementById('reservas-body');
 const counter = document.getElementById('results-count');
 const clearLink = document.getElementById('filtros-limpiar');
 const stats = document.getElementById('stats');
@@ -21,78 +21,79 @@ document.querySelectorAll('.js-estado').forEach((button) => { button.hidden = fa
 // Los filtros se aplican al escribir; el botón solo hace falta sin JS.
 document.getElementById('filtros-aplicar').hidden = true;
 
-function cell(label, ...children) {
-    const td = el('td', { attrs: { 'data-label': label } });
-    td.append(...children);
-    return td;
+const SKELETON_DELAY_MS = 200;
+const SKELETON_COUNT = 3;
+
+function line(iconName, text) {
+    const p = el('p', { className: 'booking-card__line' });
+    p.append(icon(iconName), el('span', { text }));
+    return p;
 }
 
-function timeEl(iso) {
-    return el('time', { text: formatDate(iso), attrs: { datetime: iso } });
-}
+/** Misma estructura que templates/partials/_reserva_card.html.twig. */
+function renderCard(reserva) {
+    const li = el('li', { className: 'booking-card', attrs: { 'data-id': String(reserva.id) } });
 
-/** Misma estructura que templates/partials/_reserva_row.html.twig. */
-function renderRow(reserva) {
-    const tr = el('tr', { attrs: { 'data-id': String(reserva.id) } });
-    const href = `${BASE_URL}/panel/reservas/${reserva.id}`;
+    const title = el('h3', { className: 'booking-card__guest' });
+    title.append(el('a', {
+        className: 'booking-card__link',
+        text: reserva.nombre_huesped,
+        attrs: { href: `${BASE_URL}/panel/reservas/${reserva.id}` },
+    }));
+    const estado = el('span', { attrs: { 'data-cell': 'estado' } });
+    estado.append(badge(reserva.estado));
+    const head = el('div', { className: 'booking-card__head' });
+    head.append(title, estado);
 
-    const guestText = el('span', { className: 'cell-guest__text' });
-    guestText.append(
-        el('a', { className: 'row-link', text: reserva.nombre_huesped, attrs: { href } }),
-        el('span', { className: 'muted', text: reserva.email_huesped }),
-    );
-    const guestCell = cell('Huésped', avatar(reserva.nombre_huesped, reserva.id), guestText);
-    guestCell.classList.add('cell-guest');
-
-    const dates = el('span', { className: 'stay__dates' });
-    dates.append(timeEl(reserva.fecha_entrada), icon('arrow-right', 'stay__arrow'), timeEl(reserva.fecha_salida));
-    const stay = el('span', { className: 'stay' });
-    stay.append(dates, el('span', { className: 'muted', text: nightsLabel(nights(reserva.fecha_entrada, reserva.fecha_salida)) }));
-
-    const estadoCell = cell('Estado', badge(reserva.estado));
-    estadoCell.dataset.cell = 'estado';
-
-    const importeCell = cell('Importe', formatMoney(reserva.importe));
-    importeCell.classList.add('num');
-
+    const n = nights(reserva.fecha_entrada, reserva.fecha_salida);
     const group = el('span', { className: 'actions__group', attrs: { 'data-cell': 'acciones' } });
     group.append(...estadoButtons(reserva, 'row'));
-    const view = el('a', { className: 'icon-btn icon-btn--small', attrs: { href, 'aria-label': `Ver reserva #${reserva.id}` } });
-    view.append(icon('chevron-right'));
-    const actions = cell('Acciones', group, view);
-    actions.classList.add('actions');
-
-    tr.append(
-        guestCell,
-        cell('Alojamiento', reserva.nombre_alojamiento),
-        cell('Estancia', stay),
-        estadoCell,
-        importeCell,
-        actions,
+    const foot = el('div', { className: 'booking-card__foot' });
+    foot.append(
+        el('span', { className: 'booking-card__total-label', text: 'Total' }),
+        group,
+        el('span', { className: 'booking-card__amount', text: formatMoney(reserva.importe) }),
     );
-    return tr;
+
+    li.append(
+        head,
+        line('bed', reserva.nombre_alojamiento),
+        line('calendar', `${formatRange(reserva.fecha_entrada, reserva.fecha_salida)} · ${nightsLabel(n)}`),
+        foot,
+    );
+    return li;
 }
 
-/** Misma estructura que templates/partials/_empty_row.html.twig. */
+/** Misma estructura que templates/partials/_empty_card.html.twig. */
 function renderEmpty() {
     const box = el('div', { className: 'empty-state' });
     const iconBox = el('span', { className: 'empty-state__icon' });
-    iconBox.append(icon('inbox'));
+    iconBox.append(icon('logo'));
     box.append(
         iconBox,
         el('p', { className: 'empty-state__title', text: 'No hay reservas que coincidan' }),
-        el('p', { className: 'muted', text: 'Prueba con otros filtros.' }),
-        el('a', { className: 'btn btn--secondary btn--small js-clear-filters', text: 'Limpiar filtros', attrs: { href: `${BASE_URL}/panel` } }),
+        el('p', { className: 'muted', text: 'Prueba con otro nombre, estado o rango de fechas.' }),
+        el('a', { className: 'btn btn--secondary js-clear-filters', text: 'Limpiar filtros', attrs: { href: `${BASE_URL}/panel` } }),
     );
-    const td = el('td', { attrs: { colspan: '6' } });
-    td.append(box);
-    const tr = el('tr', { className: 'empty-row' });
-    tr.append(td);
-    return tr;
+    const li = el('li', { className: 'booking-empty' });
+    li.append(box);
+    return li;
 }
 
-function renderRows(reservas) {
-    tbody.replaceChildren(...(reservas.length === 0 ? [renderEmpty()] : reservas.map(renderRow)));
+/** Skeleton/Booking Card: huecos con la forma de la tarjeta mientras llega la respuesta. */
+function renderSkeletons() {
+    const cards = Array.from({ length: SKELETON_COUNT }, () => {
+        const li = el('li', { className: 'booking-card booking-card--skeleton', attrs: { 'aria-hidden': 'true' } });
+        ['skeleton--title', 'skeleton--line', 'skeleton--line skeleton--short', 'skeleton--foot'].forEach((mod) => {
+            li.append(el('span', { className: `skeleton ${mod}` }));
+        });
+        return li;
+    });
+    list.replaceChildren(...cards);
+}
+
+function renderCards(reservas) {
+    list.replaceChildren(...(reservas.length === 0 ? [renderEmpty()] : reservas.map(renderCard)));
 }
 
 function renderCount({ total, count }) {
@@ -155,16 +156,19 @@ async function load() {
     const query = params.toString();
     history.replaceState(null, '', `${BASE_URL}/panel${query ? `?${query}` : ''}`);
 
-    tbody.setAttribute('aria-busy', 'true');
+    list.setAttribute('aria-busy', 'true');
+    // Solo si la respuesta tarda: así una búsqueda rápida no parpadea.
+    const skeletonTimer = setTimeout(renderSkeletons, SKELETON_DELAY_MS);
     try {
         const { data, meta } = await api.listReservas(params, controller.signal);
-        renderRows(data);
+        renderCards(data);
         renderCount(meta);
     } catch (error) {
         if (error.name === 'AbortError') return;
         showStatus(error.message, 'error', 'No se pudo cargar el listado');
     } finally {
-        tbody.setAttribute('aria-busy', 'false');
+        clearTimeout(skeletonTimer);
+        list.setAttribute('aria-busy', 'false');
     }
 }
 
@@ -191,8 +195,8 @@ form.addEventListener('submit', (event) => {
 });
 clearLink.addEventListener('click', clearFilters);
 
-// Delegación: un único listener para los botones de todas las filas (también las nuevas).
-tbody.addEventListener('click', async (event) => {
+// Delegación: un único listener para los botones de todas las tarjetas (también las nuevas).
+list.addEventListener('click', async (event) => {
     if (event.target.closest('.js-clear-filters')) {
         clearFilters(event);
         return;
@@ -204,13 +208,13 @@ tbody.addEventListener('click', async (event) => {
     const reserva = await changeEstado(button.dataset.id, button.dataset.estado, button);
     if (!reserva) return;
 
-    const row = button.closest('tr');
+    const card = button.closest('.booking-card');
     const newBadge = badge(reserva.estado);
     newBadge.classList.add('is-new');
-    row.querySelector('[data-cell="estado"]').replaceChildren(newBadge);
-    row.querySelector('[data-cell="acciones"]').replaceChildren(...estadoButtons(reserva, 'row'));
-    // El botón pulsado ya no existe: el foco pasa a la siguiente acción de la fila.
-    row.querySelector('.js-estado, .actions .icon-btn')?.focus();
+    card.querySelector('[data-cell="estado"]').replaceChildren(newBadge);
+    card.querySelector('[data-cell="acciones"]').replaceChildren(...estadoButtons(reserva, 'row'));
+    // El botón pulsado ya no existe: el foco pasa a la siguiente acción de la tarjeta.
+    card.querySelector('.js-estado, .booking-card__link')?.focus();
 });
 
 // Al cambiar el estado de una reserva se refresca el resumen.

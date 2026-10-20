@@ -9,7 +9,12 @@
     <div class="page-header">
         <div>
             <p class="eyebrow">Panel</p>
-            <h1>Reservas</h1>
+            <div class="page-header__title">
+                <h1>Reservas</h1>
+                <p id="results-count" class="page-header__count" aria-live="polite">
+                    {{ total }} {{ total == 1 ? 'reserva' : 'reservas' }}{% if total > reservas|length %} (mostrando {{ reservas|length }}){% endif %}
+                </p>
+            </div>
             <p class="page-header__lead">
                 {% if usuario.rol == 'admin' %}
                     Todas las reservas de todos los anfitriones. Confirma las pendientes o cancélalas.
@@ -68,76 +73,58 @@
         </div>
     {% endif %}
 
-    <section class="card card--flush" aria-labelledby="listado-titulo">
-        <h2 id="listado-titulo" class="visually-hidden">Listado de reservas</h2>
+    <form id="filtros" class="card filters" method="get" action="{{ url('/panel') }}" novalidate>
+        <div class="filters__fields">
+            <div class="field filters__search">
+                <label for="f-q">Huésped</label>
+                <div class="input-icon">
+                    {{ ui.icon('search') }}
+                    <input id="f-q" type="search" name="q" value="{{ filtro.q }}" maxlength="100" placeholder="Buscar por nombre" autocomplete="off">
+                </div>
+            </div>
+            <div class="field">
+                <label for="f-desde">Desde</label>
+                <input id="f-desde" type="date" name="desde" value="{{ filtro.desde }}" aria-describedby="filtros-hint">
+            </div>
+            <div class="field">
+                <label for="f-hasta">Hasta</label>
+                <input id="f-hasta" type="date" name="hasta" value="{{ filtro.hasta }}" aria-describedby="filtros-hint">
+            </div>
+        </div>
 
-        <form id="filtros" class="filters" method="get" action="{{ url('/panel') }}" novalidate>
-            <fieldset class="segmented">
-                <legend class="visually-hidden">Estado</legend>
-                <label class="segmented__option">
+        <div class="filters__bar">
+            {# Filter Chip del diseño: radios con aspecto de chip (selección única). #}
+            <fieldset class="chips">
+                <legend class="chips__legend">Estado</legend>
+                <label class="chip">
                     <input type="radio" name="estado" value=""{% if filtro.estado is empty %} checked{% endif %}>
-                    <span>Todos</span>
+                    <span>{{ ui.icon('check', 'chip__check') }}Todos</span>
                 </label>
                 {% for estado in estados %}
-                    <label class="segmented__option">
+                    <label class="chip">
                         <input type="radio" name="estado" value="{{ estado.value }}"{% if filtro.estado == estado.value %} checked{% endif %}>
-                        <span>{{ estado.label }}</span>
+                        <span>{{ ui.icon('check', 'chip__check') }}{{ estado.label }}</span>
                     </label>
                 {% endfor %}
             </fieldset>
-
-            <div class="filters__row">
-                <div class="field field--grow">
-                    <label for="f-q" class="visually-hidden">Huésped</label>
-                    <div class="input-icon">
-                        {{ ui.icon('search') }}
-                        <input id="f-q" type="search" name="q" value="{{ filtro.q }}" maxlength="100" placeholder="Buscar huésped…" autocomplete="off">
-                    </div>
-                </div>
-                <div class="field field--date">
-                    <label for="f-desde" class="field__inline-label">Desde</label>
-                    <input id="f-desde" type="date" name="desde" value="{{ filtro.desde }}">
-                </div>
-                <div class="field field--date">
-                    <label for="f-hasta" class="field__inline-label">Hasta</label>
-                    <input id="f-hasta" type="date" name="hasta" value="{{ filtro.hasta }}">
-                </div>
-                <div class="filters__actions">
-                    {# Con JS los filtros se aplican al escribir; el botón queda para el modo sin JS. #}
-                    <button type="submit" class="btn btn--secondary" id="filtros-aplicar">Filtrar</button>
-                    <a class="btn btn--ghost" href="{{ url('/panel') }}" id="filtros-limpiar">Limpiar</a>
-                </div>
+            <div class="filters__actions">
+                {# Con JS los filtros se aplican al escribir; el botón queda para el modo sin JS. #}
+                <button type="submit" class="btn btn--secondary" id="filtros-aplicar">Filtrar</button>
+                <a class="btn btn--ghost" href="{{ url('/panel') }}" id="filtros-limpiar">{{ ui.icon('x') }} Limpiar filtros</a>
             </div>
-            <p class="hint">El rango de fechas muestra las reservas cuya estancia se solapa con él.</p>
-        </form>
-
-        <div class="table-wrap">
-            <table class="table" id="reservas-table">
-                <thead>
-                    <tr>
-                        <th scope="col">Huésped</th>
-                        <th scope="col">Alojamiento</th>
-                        <th scope="col">Estancia</th>
-                        <th scope="col">Estado</th>
-                        <th scope="col" class="num">Importe</th>
-                        <th scope="col"><span class="visually-hidden">Acciones</span></th>
-                    </tr>
-                </thead>
-                <tbody id="reservas-body">
-                    {% for reserva in reservas %}
-                        {% include 'partials/_reserva_row.html.twig' with { reserva: reserva } only %}
-                    {% else %}
-                        {% include 'partials/_empty_row.html.twig' only %}
-                    {% endfor %}
-                </tbody>
-            </table>
         </div>
+        <p class="hint" id="filtros-hint">Las fechas muestran las reservas cuya estancia se solapa con ese rango.</p>
+    </form>
 
-        <div class="card__footer">
-            <p id="results-count" class="muted" aria-live="polite">
-                {{ total }} {{ total == 1 ? 'reserva' : 'reservas' }}{% if total > reservas|length %} (mostrando {{ reservas|length }}){% endif %}
-            </p>
-        </div>
+    <section aria-labelledby="listado-titulo">
+        <h2 id="listado-titulo" class="visually-hidden">Listado de reservas</h2>
+        <ul class="booking-grid" id="reservas-body" role="list">
+            {% for reserva in reservas %}
+                {% include 'partials/_reserva_card.html.twig' with { reserva: reserva } only %}
+            {% else %}
+                {% include 'partials/_empty_card.html.twig' only %}
+            {% endfor %}
+        </ul>
     </section>
 
 {% endblock %}

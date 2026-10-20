@@ -86,6 +86,13 @@ export function formatDate(isoDate) {
     return `${d} ${MESES[m - 1]} ${y}`;
 }
 
+/** '12 oct – 15 oct 2026'; con años distintos, ambos completos (igual que la macro rango de Twig). */
+export function formatRange(entrada, salida) {
+    if (entrada.slice(0, 4) !== salida.slice(0, 4)) return `${formatDate(entrada)} – ${formatDate(salida)}`;
+    const [, m, d] = entrada.split('-').map(Number);
+    return `${d} ${MESES[m - 1]} – ${formatDate(salida)}`;
+}
+
 /** 'YYYY-MM-DD HH:MM:SS' → '12 oct 2026 · 10:30'. */
 export function formatDateTime(value) {
     return `${formatDate(value)} · ${String(value).slice(11, 16)}`;
