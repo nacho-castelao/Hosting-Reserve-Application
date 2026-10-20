@@ -46,6 +46,7 @@
     --secondary-strong: #226660;
     --secondary-soft: #e4f1ef;
     --secondary-soft-2: #cde5e2;
+    --on-secondary: #ffffff;
     --ring: rgba(42, 127, 122, 0.4);
 
     --success: #4d7530;
@@ -113,6 +114,7 @@
         --secondary-strong: #8ad1ca;
         --secondary-soft: rgba(108, 193, 185, 0.14);
         --secondary-soft-2: rgba(108, 193, 185, 0.24);
+        --on-secondary: #2b2118;
         --ring: rgba(108, 193, 185, 0.5);
         --success: #9ccb7a;
         --success-soft: rgba(94, 140, 58, 0.2);
@@ -152,6 +154,7 @@
     --secondary-strong: #8ad1ca;
     --secondary-soft: rgba(108, 193, 185, 0.14);
     --secondary-soft-2: rgba(108, 193, 185, 0.24);
+    --on-secondary: #2b2118;
     --ring: rgba(108, 193, 185, 0.5);
     --success: #9ccb7a;
     --success-soft: rgba(94, 140, 58, 0.2);
@@ -977,7 +980,7 @@ textarea:disabled {
 .chip input:checked + span {
     background: var(--secondary);
     border-color: var(--secondary);
-    color: #fff;
+    color: var(--on-secondary);
 }
 
 .chip input:checked + span .chip__check {
@@ -1080,6 +1083,7 @@ textarea:disabled {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    min-height: 3.5rem;
     margin-top: 0.5rem;
     padding-top: 0.75rem;
     border-top: 1px dashed var(--border);
