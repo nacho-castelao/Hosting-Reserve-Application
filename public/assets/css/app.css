@@ -294,11 +294,6 @@ p {
 
 .eyebrow {
     margin: 0 0 0.25rem;
-    font-size: 0.75rem;
-    font-weight: 650;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--primary-text);
 }
 
 :focus-visible {
@@ -312,9 +307,9 @@ p {
     position: sticky;
     top: 0;
     z-index: 20;
-    background: color-mix(in srgb, var(--surface) 82%, transparent);
-    backdrop-filter: saturate(180%) blur(12px);
-    -webkit-backdrop-filter: saturate(180%) blur(12px);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: saturate(160%) blur(12px);
+    -webkit-backdrop-filter: saturate(160%) blur(12px);
     border-bottom: 1px solid var(--border);
 }
 
@@ -322,7 +317,7 @@ p {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 3.75rem;
+    min-height: 4.5rem;
 }
 
 .site-header__actions {
@@ -342,9 +337,9 @@ p {
 .brand__mark {
     display: grid;
     place-items: center;
-    width: 2.125rem;
-    height: 2.125rem;
-    border-radius: 10px;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
     color: #fff;
     background: var(--brand);
     box-shadow: 0 0 0 2px var(--warning-solid);
@@ -362,12 +357,19 @@ p {
 }
 
 .brand__name {
-    font-weight: 700;
+    font-family: var(--font-heading);
+    font-size: 1.125rem;
+    font-weight: 600;
     letter-spacing: -0.01em;
 }
 
-.brand__tagline {
+/* Overline: Inter 12 semibold, mayúsculas, +1.2px. */
+.brand__tagline,
+.eyebrow {
     font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     color: var(--muted);
 }
 

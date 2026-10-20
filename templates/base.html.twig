@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="base-url" content="{{ base_url }}">
     <meta name="color-scheme" content="light dark">
-    <title>{% block title %}Reservas{% endblock %} · Gestor de reservas</title>
+    <title>{% block title %}Reservas{% endblock %} · MisterPlan Reservas</title>
     <link rel="icon" href="{{ asset('img/favicon.svg') }}" type="image/svg+xml">
     <link rel="preload" href="{{ asset('fonts/inter-latin-wght.woff2') }}" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="{{ asset('fonts/fraunces-latin-wght.woff2') }}" as="font" type="font/woff2" crossorigin>
@@ -24,8 +24,8 @@
             <a class="brand" href="{{ url(usuario ? '/panel' : '/') }}">
                 <span class="brand__mark">{{ ui.icon('logo') }}</span>
                 <span class="brand__text">
-                    <span class="brand__name">Gestor de reservas</span>
-                    <span class="brand__tagline">{{ usuario ? 'Panel · ' ~ usuario.rol_label : 'Alojamientos' }}</span>
+                    <span class="brand__name">MisterPlan</span>
+                    <span class="brand__tagline">{{ usuario ? 'Reservas · ' ~ usuario.rol_label : 'Reservas' }}</span>
                 </span>
             </a>
             <div class="site-header__actions">
@@ -60,7 +60,7 @@
 
     <footer class="site-footer">
         <div class="container site-footer__inner">
-            <span>Gestor de reservas</span>
+            <span>MisterPlan Reservas</span>
             <span class="muted">PHP nativo · Twig · JavaScript</span>
         </div>
     </footer>
