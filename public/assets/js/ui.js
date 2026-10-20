@@ -40,22 +40,25 @@ function dismissToast(toast) {
     setTimeout(remove, 400);
 }
 
+const TOAST_TITLES = { success: 'Hecho', error: 'No se pudo completar' };
+
 /**
  * Muestra una notificación en la zona aria-live (la leen los lectores de pantalla).
  * Las de éxito se cierran solas antes que las de error.
  */
-export function showStatus(message, type = 'success') {
+export function showStatus(message, type = 'success', title = TOAST_TITLES[type]) {
     if (!statusBox) return;
 
     const toast = el('div', { className: `toast toast--${type}` });
     const close = el('button', { className: 'icon-btn icon-btn--small', attrs: { type: 'button', 'aria-label': 'Cerrar aviso' } });
     close.append(icon('x'));
     close.addEventListener('click', () => dismissToast(toast));
-    toast.append(
-        icon(type === 'error' ? 'alert' : 'check-circle', 'toast__icon'),
+    const body = el('div', { className: 'toast__body' });
+    body.append(
+        el('p', { className: 'toast__title', text: title }),
         el('p', { className: 'toast__text', text: message }),
-        close,
     );
+    toast.append(icon(type === 'error' ? 'alert' : 'check-circle', 'toast__icon'), body, close);
 
     statusBox.append(toast);
     while (statusBox.children.length > MAX_TOASTS) statusBox.firstElementChild.remove();
@@ -107,9 +110,12 @@ export function formatMoney(amount) {
     return `${integer.replace(/\B(?=(\d{3})+(?!\d))/g, '.')},${decimals} €`;
 }
 
+const BADGE_ICONS = { pendiente: 'clock', confirmada: 'check', cancelada: 'x' };
+
+/** Etiqueta de estado con icono (igual que la macro badge de Twig). */
 export function badge(estado) {
     const span = el('span', { className: `badge badge--${estado}` });
-    span.append(el('span', { className: 'badge__dot', attrs: { 'aria-hidden': 'true' } }), estado.charAt(0).toUpperCase() + estado.slice(1));
+    span.append(icon(BADGE_ICONS[estado] ?? 'clock'), estado.charAt(0).toUpperCase() + estado.slice(1));
     return span;
 }
 
@@ -124,25 +130,30 @@ const ACCIONES = {
     confirmada: {
         icon: 'check',
         label: 'Confirmar',
-        className: { row: 'btn btn--success-soft btn--icon', detail: 'btn btn--success' },
+        detailLabel: 'Confirmar reserva',
+        className: { row: 'btn btn--success-soft btn--icon', detail: 'btn btn--primary' },
         busy: 'Confirmando…',
         title: (id) => `¿Confirmar la reserva #${id}?`,
         message: 'La reserva pasará a estado confirmada. Después solo podrá cancelarse.',
         confirmLabel: 'Confirmar reserva',
+        cancelLabel: 'Volver',
         tone: 'success',
-        done: (id) => `Reserva #${id} confirmada.`,
+        doneTitle: 'Reserva confirmada',
+        done: (id) => `La reserva #${id} ya está confirmada.`,
     },
     cancelada: {
-        icon: 'ban',
+        icon: 'x',
         label: 'Cancelar',
         detailLabel: 'Cancelar reserva',
-        className: { row: 'btn btn--danger-soft btn--icon', detail: 'btn btn--danger-soft' },
+        className: { row: 'btn btn--danger-soft btn--icon', detail: 'btn btn--secondary' },
         busy: 'Cancelando…',
-        title: (id) => `¿Cancelar la reserva #${id}?`,
-        message: 'Esta acción no se puede deshacer.',
-        confirmLabel: 'Sí, cancelar',
+        title: () => '¿Cancelar esta reserva?',
+        message: (id) => `La reserva #${id} quedará cancelada. Esta acción no se puede deshacer.`,
+        confirmLabel: 'Cancelar reserva',
+        cancelLabel: 'Mantener reserva',
         tone: 'danger',
-        done: (id) => `Reserva #${id} cancelada.`,
+        doneTitle: 'Reserva cancelada',
+        done: (id) => `La reserva #${id} se ha cancelado.`,
     },
 };
 
@@ -154,7 +165,9 @@ const TRANSICIONES = { pendiente: ['confirmada', 'cancelada'], confirmada: ['can
  * @param {'row'|'detail'} variant
  */
 export function estadoButtons(reserva, variant) {
-    return TRANSICIONES[reserva.estado].map((estado) => {
+    const estados = TRANSICIONES[reserva.estado];
+    // En el detalle la acción principal (confirmar) va la última, como en el diseño.
+    return (variant === 'detail' ? [...estados].reverse() : estados).map((estado) => {
         const accion = ACCIONES[estado];
         const button = el('button', {
             className: `${accion.className[variant]} js-estado`,
@@ -168,7 +181,9 @@ export function estadoButtons(reserva, variant) {
                 text: `${accion.label} reserva #${reserva.id}`,
             }));
         } else {
-            button.append(icon(accion.icon), el('span', { text: accion.detailLabel ?? accion.label }));
+            // Cancelar es secundario en el detalle: sin icono, solo texto.
+            if (estado !== 'cancelada') button.append(icon(accion.icon));
+            button.append(el('span', { text: accion.detailLabel ?? accion.label }));
         }
         return button;
     });
@@ -185,9 +200,9 @@ dialog?.addEventListener('click', (event) => {
 
 /**
  * Diálogo modal accesible en lugar de window.confirm. Resuelve true si se confirma.
- * @param {{title: string, message: string, confirmLabel: string, tone?: 'danger'|'success'}} options
+ * @param {{title: string, message: string, confirmLabel: string, cancelLabel?: string, tone?: 'danger'|'success'}} options
  */
-export function confirmDialog({ title, message, confirmLabel, tone = 'danger' }) {
+export function confirmDialog({ title, message, confirmLabel, cancelLabel = 'Volver', tone = 'danger' }) {
     if (!dialog || typeof dialog.showModal !== 'function') {
         return Promise.resolve(window.confirm(`${title}\n\n${message}`));
     }
@@ -198,8 +213,8 @@ export function confirmDialog({ title, message, confirmLabel, tone = 'danger' })
     iconBox.className = `dialog__icon dialog__icon--${tone}`;
     iconBox.replaceChildren(icon(tone === 'danger' ? 'alert' : 'check-circle'));
     const confirmButton = dialog.querySelector('[data-dialog-confirm]');
-    confirmButton.className = `btn btn--${tone}`;
     confirmButton.textContent = confirmLabel;
+    dialog.querySelector('[value="cancel"]').textContent = cancelLabel;
 
     dialog.returnValue = '';
     dialog.showModal();
@@ -219,8 +234,9 @@ export async function changeEstado(id, estado, button) {
     const accion = ACCIONES[estado];
     const ok = await confirmDialog({
         title: accion.title(id),
-        message: accion.message,
+        message: typeof accion.message === 'function' ? accion.message(id) : accion.message,
         confirmLabel: accion.confirmLabel,
+        cancelLabel: accion.cancelLabel,
         tone: accion.tone,
     });
     if (!ok) return null;
@@ -228,11 +244,11 @@ export async function changeEstado(id, estado, button) {
     setBusy(button, true, accion.busy);
     try {
         const { data } = await api.cambiarEstado(id, estado);
-        showStatus(accion.done(id));
+        showStatus(accion.done(id), 'success', accion.doneTitle);
         document.dispatchEvent(new CustomEvent('reserva:actualizada', { detail: data }));
         return data;
     } catch (error) {
-        showStatus(error.message, 'error');
+        showStatus(error.message, 'error', 'No se pudo cambiar el estado');
         setBusy(button, false);
         return null;
     }

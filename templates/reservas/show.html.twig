@@ -26,14 +26,14 @@
             </div>
             {# Ocultos sin JS: los cambios de estado necesitan la API (PATCH). #}
             <div class="detail-hero__actions" data-cell="acciones">
-                {% if reserva.estado == 'pendiente' %}
-                    <button type="button" class="btn btn--success js-estado" data-id="{{ reserva.id }}" data-estado="confirmada" hidden>
-                        {{ ui.icon('check') }}<span>Confirmar</span>
+                {% if reserva.estado != 'cancelada' %}
+                    <button type="button" class="btn btn--secondary js-estado" data-id="{{ reserva.id }}" data-estado="cancelada" hidden>
+                        <span>Cancelar reserva</span>
                     </button>
                 {% endif %}
-                {% if reserva.estado != 'cancelada' %}
-                    <button type="button" class="btn btn--danger-soft js-estado" data-id="{{ reserva.id }}" data-estado="cancelada" hidden>
-                        {{ ui.icon('ban') }}<span>Cancelar reserva</span>
+                {% if reserva.estado == 'pendiente' %}
+                    <button type="button" class="btn btn--primary js-estado" data-id="{{ reserva.id }}" data-estado="confirmada" hidden>
+                        {{ ui.icon('check') }}<span>Confirmar reserva</span>
                     </button>
                 {% endif %}
             </div>

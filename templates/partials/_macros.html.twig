@@ -3,9 +3,10 @@
     <svg class="icon{{ class is defined ? ' ' ~ class : '' }}" aria-hidden="true" focusable="false"><use href="{{ asset('img/icons.svg') }}#{{ name }}"></use></svg>
 {%- endmacro %}
 
-{# Etiqueta de color para el estado de una reserva. #}
+{# Etiqueta de estado: color, icono y texto (igual que badge en ui.js). #}
 {% macro badge(estado) %}
-    <span class="badge badge--{{ estado }}"><span class="badge__dot" aria-hidden="true"></span>{{ estado|capitalize }}</span>
+    {%- set iconos = { pendiente: 'clock', confirmada: 'check', cancelada: 'x' } -%}
+    <span class="badge badge--{{ estado }}">{{ _self.icon(iconos[estado] ?? 'clock') }}{{ estado|capitalize }}</span>
 {%- endmacro %}
 
 {# Importe con formato español: 1.234,50 € #}

@@ -207,11 +207,11 @@ form.addEventListener('submit', async (event) => {
     try {
         const { data: reserva } = await api.createReserva(payload);
         renderRecibida(reserva);
-        showStatus(`Reserva #${reserva.id} enviada.`);
+        showStatus(`Referencia #${reserva.id}. El anfitrión la revisará pronto.`, 'success', 'Solicitud enviada');
     } catch (error) {
         if (error.status === 422) showErrors(error.fields);
         else showAlert(error.message); // 404, 409 (fechas ocupadas), 429, red…
-        showStatus(error.message, 'error');
+        showStatus(error.message, 'error', 'No se pudo enviar la reserva');
         setBusy(submitButton, false);
     } finally {
         form.setAttribute('aria-busy', 'false');

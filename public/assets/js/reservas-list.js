@@ -144,7 +144,7 @@ async function load() {
     const params = currentParams();
     const problem = validateFilters(params);
     if (problem) {
-        showStatus(problem, 'error');
+        showStatus(problem, 'error', 'Filtros no válidos');
         return;
     }
 
@@ -162,7 +162,7 @@ async function load() {
         renderCount(meta);
     } catch (error) {
         if (error.name === 'AbortError') return;
-        showStatus(error.message, 'error');
+        showStatus(error.message, 'error', 'No se pudo cargar el listado');
     } finally {
         tbody.setAttribute('aria-busy', 'false');
     }
