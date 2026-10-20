@@ -21,6 +21,7 @@
 
         <section class="card" aria-labelledby="reserva-titulo" id="reserva-card">
             <h2 id="reserva-titulo" class="card__title">Reservar</h2>
+            <p class="muted form-intro">Todos los campos son obligatorios salvo los marcados como opcionales.</p>
 
             {# Con JS el formulario va por la API (reserva-form.js); sin JS, POST clásico con PRG. #}
             <form id="reserva-form" method="post" action="{{ url('/alojamientos/' ~ alojamiento.id ~ '/reservas') }}"
@@ -28,11 +29,15 @@
                 <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
 
                 <div class="alert alert--error" role="alert" data-form-alert{% if form_errors is empty and form_error is null %} hidden{% endif %}>
-                    {{ ui.icon('alert', 'alert__icon') }}<p data-form-alert-text>{{ form_error ?? 'Revisa los campos marcados.' }}</p>
+                    {{ ui.icon('alert', 'alert__icon') }}
+                    <div>
+                        <p class="alert__title">No hemos podido enviar tu reserva</p>
+                        <p data-form-alert-text>{{ form_error ?? 'Revisa los campos marcados.' }}</p>
+                    </div>
                 </div>
 
                 <fieldset class="form-section">
-                    <legend class="form-section__title">{{ ui.icon('calendar') }} Estancia</legend>
+                    <legend class="form-section__title">Estancia</legend>
                     <div class="form-grid">
                         <div class="field">
                             <label for="fecha_entrada">Entrada</label>
@@ -51,20 +56,26 @@
                 </fieldset>
 
                 <fieldset class="form-section">
-                    <legend class="form-section__title">{{ ui.icon('user') }} Tus datos</legend>
+                    <legend class="form-section__title">Tus datos</legend>
                     <div class="form-grid">
                         <div class="field full">
                             <label for="nombre_huesped">Nombre completo</label>
-                            <input id="nombre_huesped" name="nombre_huesped" type="text" required maxlength="{{ max_lengths.nombre_huesped }}"
-                                   autocomplete="name" placeholder="Ana García López" value="{{ old.nombre_huesped ?? '' }}"
-                                   aria-describedby="error-nombre_huesped"{% if form_errors.nombre_huesped is defined %} aria-invalid="true"{% endif %}>
+                            <div class="input-icon">
+                                {{ ui.icon('user') }}
+                                <input id="nombre_huesped" name="nombre_huesped" type="text" required maxlength="{{ max_lengths.nombre_huesped }}"
+                                       autocomplete="name" placeholder="Ana García López" value="{{ old.nombre_huesped ?? '' }}"
+                                       aria-describedby="error-nombre_huesped"{% if form_errors.nombre_huesped is defined %} aria-invalid="true"{% endif %}>
+                            </div>
                             {{ ui.field_error('nombre_huesped', form_errors) }}
                         </div>
                         <div class="field full">
                             <label for="email_huesped">Email</label>
-                            <input id="email_huesped" name="email_huesped" type="email" required maxlength="{{ max_lengths.email_huesped }}"
-                                   autocomplete="email" placeholder="ana@ejemplo.com" value="{{ old.email_huesped ?? '' }}"
-                                   aria-describedby="error-email_huesped"{% if form_errors.email_huesped is defined %} aria-invalid="true"{% endif %}>
+                            <div class="input-icon">
+                                {{ ui.icon('mail') }}
+                                <input id="email_huesped" name="email_huesped" type="email" required maxlength="{{ max_lengths.email_huesped }}"
+                                       autocomplete="email" placeholder="ana@ejemplo.com" value="{{ old.email_huesped ?? '' }}"
+                                       aria-describedby="error-email_huesped"{% if form_errors.email_huesped is defined %} aria-invalid="true"{% endif %}>
+                            </div>
                             {{ ui.field_error('email_huesped', form_errors) }}
                         </div>
                         <div class="field full">
