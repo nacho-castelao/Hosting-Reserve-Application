@@ -18,41 +18,64 @@
     src: url("../fonts/inter-latin-wght.woff2") format("woff2");
 }
 
+/* Tokens del sistema de diseño MisterPlan (Figma: colecciones Color, Spacing y Radius).
+   La paleta base se oscureció donde no llegaba a WCAG AA: el terracota de la marca
+   (#c4572e) queda para usos decorativos y los botones usan #a9461f. */
 :root {
-    --bg: #f6f7fb;
+    --bg: #fbf6ef;
     --surface: #ffffff;
-    --surface-2: #f8fafc;
-    --surface-hover: #f5f7ff;
-    --text: #0f172a;
-    --text-2: #334155;
-    --muted: #64748b;
-    --border: #e4e7ef;
-    --border-strong: #cfd5e1;
+    --surface-2: #f3ebdf;
+    --surface-hover: #f8f1e7;
+    --text: #2b2118;
+    --text-2: #3d3026;
+    --muted: #7a6a5c;
+    --border: #e7dccd;
+    --border-strong: #9a8775;
 
-    --primary: #4f46e5;
-    --primary-hover: #4338ca;
-    --primary-soft: #eef0ff;
-    --primary-text: #4338ca;
+    --brand: #c4572e;
+    --primary: #a9461f;
+    --primary-hover: #8e3a19;
+    --primary-pressed: #76301a;
+    --primary-soft: #f8e9e1;
+    --primary-text: #a9461f;
     --on-primary: #ffffff;
-    --ring: rgba(79, 70, 229, 0.35);
+    --disabled: #e7dccd;
+    --on-disabled: #7a6a5c;
 
-    --success: #047857;
-    --success-solid: #059669;
-    --success-soft: #e7f8f0;
-    --warning: #a35b00;
-    --warning-soft: #fff4e0;
-    --danger: #c0262d;
-    --danger-solid: #dc2626;
-    --danger-soft: #fdecec;
-    --neutral-soft: #eef1f6;
+    --secondary: #2a7f7a;
+    --secondary-strong: #226660;
+    --secondary-soft: #e4f1ef;
+    --secondary-soft-2: #cde5e2;
+    --ring: rgba(42, 127, 122, 0.4);
+
+    --success: #4d7530;
+    --success-solid: #4d7530;
+    --success-soft: #eaf1e2;
+    --warning: #7a4e0e;
+    --warning-solid: #e9a23b;
+    --on-warning: #2b2118;
+    --warning-soft: #fcf1de;
+    --danger: #b3261e;
+    --danger-solid: #b3261e;
+    --danger-soft: #fbeae8;
+    --neutral-soft: #f3ebdf;
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-7: 48px;
 
     --radius-sm: 8px;
-    --radius: 12px;
+    --radius: 8px;
     --radius-lg: 16px;
-    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-    --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 16px -4px rgba(15, 23, 42, 0.08);
-    --shadow-lg: 0 24px 48px -12px rgba(15, 23, 42, 0.25);
-    --backdrop: rgba(15, 23, 42, 0.45);
+    --radius-pill: 999px;
+    --shadow-sm: 0 1px 2px rgba(43, 33, 24, 0.06);
+    --shadow: 0 1px 2px rgba(43, 33, 24, 0.05), 0 4px 14px -6px rgba(43, 33, 24, 0.12);
+    --shadow-lg: 0 24px 48px -12px rgba(43, 33, 24, 0.3);
+    --backdrop: rgba(43, 33, 24, 0.48);
 
     --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto,
         "Helvetica Neue", Arial, sans-serif;
@@ -62,70 +85,84 @@
     color-scheme: light;
 }
 
-/* Tokens del tema oscuro: se repiten para el modo del sistema y para la elección explícita. */
+/* Tema oscuro (no está en Figma): misma paleta cálida sobre fondos tostados, con los
+   colores de acción aclarados para mantener el contraste AA. Se repite para el modo
+   del sistema y para la elección explícita. */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-        --bg: #0b0f19;
-        --surface: #121826;
-        --surface-2: #161d2d;
-        --surface-hover: #1a2235;
-        --text: #e8ecf4;
-        --text-2: #c3cad8;
-        --muted: #8f9ab0;
-        --border: #232c3f;
-        --border-strong: #334057;
-        --primary: #7c78ff;
-        --primary-hover: #918eff;
-        --primary-soft: rgba(124, 120, 255, 0.14);
-        --primary-text: #a9a6ff;
-        --on-primary: #0b0f19;
-        --ring: rgba(124, 120, 255, 0.45);
-        --success: #4ade9f;
-        --success-solid: #22c55e;
-        --success-soft: rgba(34, 197, 94, 0.13);
-        --warning: #fbbf5a;
-        --warning-soft: rgba(251, 191, 90, 0.13);
-        --danger: #ff8a8a;
-        --danger-solid: #ef4444;
-        --danger-soft: rgba(239, 68, 68, 0.14);
-        --neutral-soft: rgba(148, 163, 184, 0.14);
+        --bg: #1c1611;
+        --surface: #261e18;
+        --surface-2: #2f261f;
+        --surface-hover: #2c231c;
+        --text: #f3ebdf;
+        --text-2: #e2d6c6;
+        --muted: #b3a595;
+        --border: #3b2f26;
+        --border-strong: #7a6a5c;
+        --brand: #e0835a;
+        --primary: #e0835a;
+        --primary-hover: #e99872;
+        --primary-pressed: #f0ad8c;
+        --primary-soft: rgba(224, 131, 90, 0.16);
+        --primary-text: #f0a27f;
+        --on-primary: #2b2118;
+        --disabled: #3b2f26;
+        --on-disabled: #b3a595;
+        --secondary: #6cc1b9;
+        --secondary-strong: #8ad1ca;
+        --secondary-soft: rgba(108, 193, 185, 0.14);
+        --secondary-soft-2: rgba(108, 193, 185, 0.24);
+        --ring: rgba(108, 193, 185, 0.5);
+        --success: #9ccb7a;
+        --success-soft: rgba(94, 140, 58, 0.2);
+        --warning: #f2be6e;
+        --warning-soft: rgba(233, 162, 59, 0.16);
+        --danger: #ff9a8f;
+        --danger-soft: rgba(179, 38, 30, 0.22);
+        --neutral-soft: rgba(243, 235, 223, 0.08);
         --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
         --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
         --shadow-lg: 0 24px 64px -12px rgba(0, 0, 0, 0.7);
-        --backdrop: rgba(2, 6, 15, 0.7);
+        --backdrop: rgba(10, 7, 5, 0.7);
         color-scheme: dark;
     }
 }
 
 :root[data-theme="dark"] {
-    --bg: #0b0f19;
-    --surface: #121826;
-    --surface-2: #161d2d;
-    --surface-hover: #1a2235;
-    --text: #e8ecf4;
-    --text-2: #c3cad8;
-    --muted: #8f9ab0;
-    --border: #232c3f;
-    --border-strong: #334057;
-    --primary: #7c78ff;
-    --primary-hover: #918eff;
-    --primary-soft: rgba(124, 120, 255, 0.14);
-    --primary-text: #a9a6ff;
-    --on-primary: #0b0f19;
-    --ring: rgba(124, 120, 255, 0.45);
-    --success: #4ade9f;
-    --success-solid: #22c55e;
-    --success-soft: rgba(34, 197, 94, 0.13);
-    --warning: #fbbf5a;
-    --warning-soft: rgba(251, 191, 90, 0.13);
-    --danger: #ff8a8a;
-    --danger-solid: #ef4444;
-    --danger-soft: rgba(239, 68, 68, 0.14);
-    --neutral-soft: rgba(148, 163, 184, 0.14);
+    --bg: #1c1611;
+    --surface: #261e18;
+    --surface-2: #2f261f;
+    --surface-hover: #2c231c;
+    --text: #f3ebdf;
+    --text-2: #e2d6c6;
+    --muted: #b3a595;
+    --border: #3b2f26;
+    --border-strong: #7a6a5c;
+    --brand: #e0835a;
+    --primary: #e0835a;
+    --primary-hover: #e99872;
+    --primary-pressed: #f0ad8c;
+    --primary-soft: rgba(224, 131, 90, 0.16);
+    --primary-text: #f0a27f;
+    --on-primary: #2b2118;
+    --disabled: #3b2f26;
+    --on-disabled: #b3a595;
+    --secondary: #6cc1b9;
+    --secondary-strong: #8ad1ca;
+    --secondary-soft: rgba(108, 193, 185, 0.14);
+    --secondary-soft-2: rgba(108, 193, 185, 0.24);
+    --ring: rgba(108, 193, 185, 0.5);
+    --success: #9ccb7a;
+    --success-soft: rgba(94, 140, 58, 0.2);
+    --warning: #f2be6e;
+    --warning-soft: rgba(233, 162, 59, 0.16);
+    --danger: #ff9a8f;
+    --danger-soft: rgba(179, 38, 30, 0.22);
+    --neutral-soft: rgba(243, 235, 223, 0.08);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 24px 64px -12px rgba(0, 0, 0, 0.7);
-    --backdrop: rgba(2, 6, 15, 0.7);
+    --backdrop: rgba(10, 7, 5, 0.7);
     color-scheme: dark;
 }
 
@@ -309,8 +346,8 @@ p {
     height: 2.125rem;
     border-radius: 10px;
     color: #fff;
-    background: linear-gradient(135deg, #6366f1, #4338ca);
-    box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.45);
+    background: var(--brand);
+    box-shadow: 0 0 0 2px var(--warning-solid);
 }
 
 .brand__mark .icon {
@@ -842,7 +879,7 @@ textarea:focus-visible {
 .segmented__option input:checked + span {
     background: var(--surface);
     color: var(--text);
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 1px 3px rgba(43, 33, 24, 0.12);
 }
 
 .segmented__option input:focus-visible + span {
@@ -885,7 +922,7 @@ textarea:focus-visible {
 .btn--primary {
     background: var(--primary);
     color: var(--on-primary);
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    box-shadow: var(--shadow-sm);
 }
 
 .btn--primary:hover {
@@ -1074,12 +1111,12 @@ textarea:focus-visible {
     font-size: 1.15rem;
 }
 
-.avatar--0 { --av-bg: #e0e7ff; --av-fg: #4338ca; }
-.avatar--1 { --av-bg: #dcfce7; --av-fg: #15803d; }
-.avatar--2 { --av-bg: #fef3c7; --av-fg: #b45309; }
-.avatar--3 { --av-bg: #fce7f3; --av-fg: #be185d; }
-.avatar--4 { --av-bg: #e0f2fe; --av-fg: #0369a1; }
-.avatar--5 { --av-bg: #ede9fe; --av-fg: #6d28d9; }
+.avatar--0 { --av-bg: #f8e9e1; --av-fg: #8e3a19; }
+.avatar--1 { --av-bg: #eaf1e2; --av-fg: #4d7530; }
+.avatar--2 { --av-bg: #fcf1de; --av-fg: #7a4e0e; }
+.avatar--3 { --av-bg: #e4f1ef; --av-fg: #226660; }
+.avatar--4 { --av-bg: #f3ebdf; --av-fg: #5c4a3c; }
+.avatar--5 { --av-bg: #fbeae8; --av-fg: #9a2019; }
 
 /* ---------- Tabla: tarjetas apiladas en móvil ---------- */
 
