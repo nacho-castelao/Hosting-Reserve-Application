@@ -1,6 +1,23 @@
 /* Gestor de reservas — estilos mobile first, sin frameworks.
    Tema claro por defecto; oscuro según el sistema o el botón de la cabecera (data-theme). */
 
+/* Fuentes autoalojadas (la CSP no permite orígenes externos). */
+@font-face {
+    font-family: "Fraunces";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../fonts/fraunces-latin-wght.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../fonts/inter-latin-wght.woff2") format("woff2");
+}
+
 :root {
     --bg: #f6f7fb;
     --surface: #ffffff;
@@ -39,6 +56,7 @@
 
     --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto,
         "Helvetica Neue", Arial, sans-serif;
+    --font-heading: "Fraunces", Georgia, "Times New Roman", serif;
     --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 
     color-scheme: light;
@@ -129,8 +147,8 @@ body {
     display: flex;
     flex-direction: column;
     font-family: var(--font);
-    font-size: 0.9375rem;
-    line-height: 1.55;
+    font-size: 1rem;
+    line-height: 1.5;
     color: var(--text);
     background: var(--bg);
     -webkit-font-smoothing: antialiased;
@@ -151,19 +169,27 @@ a {
 h1,
 h2,
 h3 {
-    line-height: 1.2;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    line-height: 1.25;
     margin: 0 0 0.75rem;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.01em;
 }
 
+/* Escala tipográfica del diseño: H1 28/36, H2 22/28, H3 18/24. */
 h1 {
-    font-size: 1.625rem;
-    font-weight: 700;
+    font-size: 1.75rem;
+    line-height: 2.25rem;
 }
 
 h2 {
-    font-size: 1.0625rem;
-    font-weight: 650;
+    font-size: 1.375rem;
+    line-height: 1.75rem;
+}
+
+h3 {
+    font-size: 1.125rem;
+    line-height: 1.5rem;
 }
 
 p {
@@ -1736,8 +1762,10 @@ textarea:focus-visible {
         padding-top: 2.25rem;
     }
 
+    /* Display 40/48 en pantallas anchas. */
     h1 {
-        font-size: 1.875rem;
+        font-size: 2.5rem;
+        line-height: 3rem;
     }
 
     .toasts {
