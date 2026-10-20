@@ -29,9 +29,17 @@ final class View
 
         $this->twig->addGlobal('base_url', $basePath);
         $this->twig->addFunction(new TwigFunction('url', static fn (string $path = '/'): string => $basePath . $path));
+        // ?v= con la fecha de modificación: el servidor cachea los estáticos 7 días y así
+        // cada despliegue cambia la URL de los ficheros que han cambiado.
+        $assetsDir = dirname(__DIR__, 2) . '/public/assets/';
         $this->twig->addFunction(new TwigFunction(
             'asset',
-            static fn (string $path): string => $basePath . '/assets/' . ltrim($path, '/'),
+            static function (string $path) use ($basePath, $assetsDir): string {
+                $path = ltrim($path, '/');
+                $mtime = @filemtime($assetsDir . $path);
+
+                return $basePath . '/assets/' . $path . ($mtime === false ? '' : '?v=' . $mtime);
+            },
         ));
         // Perezoso: solo se abre sesión cuando una plantilla necesita el token.
         $this->twig->addFunction(new TwigFunction('csrf_token', static fn (): string => Csrf::token()));

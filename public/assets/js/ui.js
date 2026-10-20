@@ -1,10 +1,14 @@
 // Utilidades de interfaz compartidas. Nunca se usa innerHTML con datos: todo
 // se construye con createElement/textContent, así que no hay riesgo de XSS.
 
-import { api, BASE_URL } from './api.js';
+// Las importaciones entre módulos llevan ?v= porque el servidor cachea los JS 7 días y las
+// rutas relativas no heredan la versión de la URL de entrada: al cambiar un módulo, actualizar
+// la etiqueta en todos los import (la entrada la versiona asset() en Twig).
+import { api, BASE_URL } from './api.js?v=2026-10-20';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const SPRITE = `${BASE_URL}/assets/img/icons.svg`;
+// URL versionada que pone la plantilla (misma que usa la macro icon).
+const SPRITE = document.querySelector('meta[name="icon-sprite"]')?.content ?? `${BASE_URL}/assets/img/icons.svg`;
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 const MAX_TOASTS = 3;
 

@@ -2,8 +2,8 @@
 // ReservaValidator), total estimado en vivo y envío por la API. El importe real lo
 // calcula siempre el servidor; aquí solo se muestra como anticipo.
 
-import { api, BASE_URL } from './api.js';
-import { badge, el, formatDate, formatMoney, icon, nights, nightsLabel, setBusy, showStatus } from './ui.js';
+import { api, BASE_URL } from './api.js?v=2026-10-20';
+import { badge, el, formatDate, formatMoney, icon, nights, nightsLabel, setBusy, showStatus } from './ui.js?v=2026-10-20';
 
 const form = document.getElementById('reserva-form');
 const card = document.getElementById('reserva-card');

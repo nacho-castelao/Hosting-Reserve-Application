@@ -9,8 +9,10 @@
     <meta name="color-scheme" content="light dark">
     <title>{% block title %}Reservas{% endblock %} · MisterPlan Reservas</title>
     <link rel="icon" href="{{ asset('img/favicon.svg') }}" type="image/svg+xml">
-    <link rel="preload" href="{{ asset('fonts/inter-latin-wght.woff2') }}" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="{{ asset('fonts/fraunces-latin-wght.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <meta name="icon-sprite" content="{{ asset('img/icons.svg') }}">
+    {# Sin ?v=: la URL debe coincidir con la de @font-face en app.css para no descargarlas dos veces. #}
+    <link rel="preload" href="{{ base_url }}/assets/fonts/inter-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ base_url }}/assets/fonts/fraunces-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     {# Script clásico y síncrono: aplica el tema guardado antes de pintar (sin parpadeo). #}
     <script src="{{ asset('js/theme.js') }}"></script>

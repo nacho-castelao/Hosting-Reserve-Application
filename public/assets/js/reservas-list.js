@@ -1,9 +1,9 @@
 // Listado: filtrado en vivo vía API, URL sincronizada, resumen y cambios de estado por tarjeta.
 
-import { api, BASE_URL } from './api.js';
+import { api, BASE_URL } from './api.js?v=2026-10-20';
 import {
     badge, changeEstado, el, estadoButtons, formatMoney, formatRange, icon, nights, nightsLabel, showStatus,
-} from './ui.js';
+} from './ui.js?v=2026-10-20';
 
 const form = document.getElementById('filtros');
 const list = document.getElementById('reservas-body');

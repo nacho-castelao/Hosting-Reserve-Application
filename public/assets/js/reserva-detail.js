@@ -1,6 +1,6 @@
 // Detalle: confirmación y cancelación sin recargar, actualizando la etiqueta, las acciones y el historial.
 
-import { badge, changeEstado, el, estadoButtons, formatDateTime, icon } from './ui.js';
+import { badge, changeEstado, el, estadoButtons, formatDateTime, icon } from './ui.js?v=2026-10-20';
 
 const article = document.getElementById('reserva-detalle');
 const timeline = document.getElementById('timeline');
