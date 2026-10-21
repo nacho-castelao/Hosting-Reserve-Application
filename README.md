@@ -8,7 +8,7 @@ Aplicación web de reservas de alojamientos con tres papeles:
 
 Está construida en **PHP 8.1+ nativo, sin framework**, con arquitectura MVC, PDO + MySQL/MariaDB, vistas **Twig** y **JavaScript vanilla** (módulos ES + `fetch`).
 
-**Demo desplegada:** <https://217-154-98-238.sslip.io/> · Anfitriones de prueba: `lucia@example.com`, `jordi@example.com` y `marga@example.com`, todos con la contraseña `demo-anfitrion`.
+**Demo desplegada:** <https://bookhaven.dev/> · Anfitriones de prueba: `lucia@example.com`, `jordi@example.com` y `marga@example.com`, todos con la contraseña `demo-anfitrion`.
 
 ---
 
