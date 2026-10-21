@@ -18,7 +18,7 @@
     src: url("../fonts/inter-latin-wght.woff2") format("woff2");
 }
 
-/* Tokens del sistema de diseño MisterPlan (Figma: colecciones Color, Spacing y Radius).
+/* Tokens del sistema de diseño Bookhaven (Figma: colecciones Color, Spacing y Radius).
    La paleta base se oscureció donde no llegaba a WCAG AA: el terracota de la marca
    (#c4572e) queda para usos decorativos y los botones usan #a9461f. */
 :root {
