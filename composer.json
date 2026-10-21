@@ -1,5 +1,5 @@
 {
-    "name": "misterplan/gestor-reservas",
+    "name": "bookhaven/gestor-reservas",
     "description": "Gestor de reservas de alojamientos en PHP nativo (MVC, PDO, Twig).",
     "type": "project",
     "license": "proprietary",
