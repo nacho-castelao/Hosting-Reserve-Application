@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="base-url" content="{{ base_url }}">
     <meta name="color-scheme" content="light dark">
-    <title>{% block title %}Reservas{% endblock %} · MisterPlan Reservas</title>
+    <title>{% block title %}Reservas{% endblock %} · Bookhaven</title>
     <link rel="icon" href="{{ asset('img/favicon.svg') }}" type="image/svg+xml">
     <meta name="icon-sprite" content="{{ asset('img/icons.svg') }}">
     {# Sin ?v=: la URL debe coincidir con la de @font-face en app.css para no descargarlas dos veces. #}
@@ -26,7 +26,7 @@
             <a class="brand" href="{{ url(usuario ? '/panel' : '/') }}">
                 <span class="brand__mark">{{ ui.icon('logo') }}</span>
                 <span class="brand__text">
-                    <span class="brand__name">MisterPlan</span>
+                    <span class="brand__name">Bookhaven</span>
                     <span class="brand__tagline">{{ usuario ? 'Reservas · ' ~ usuario.rol_label : 'Reservas' }}</span>
                 </span>
             </a>
@@ -62,7 +62,7 @@
 
     <footer class="site-footer">
         <div class="container site-footer__inner">
-            <span>MisterPlan Reservas</span>
+            <span>Bookhaven</span>
             <span class="muted">PHP nativo · Twig · JavaScript</span>
         </div>
     </footer>
